@@ -12,32 +12,6 @@ PROJECT_ROOT = Path(__file__).resolve().parent
 # Load environment variables before importing database configuration.
 load_dotenv(PROJECT_ROOT / ".env", override=False)
 
-# Session configuration.
-SESSION_SECRET = os.getenv("SESSION_SECRET", "").strip()
-
-if (
-    not SESSION_SECRET
-    or SESSION_SECRET == "replace_with_a_random_secret"
-    or len(SESSION_SECRET) < 32
-):
-    raise RuntimeError(
-        "SESSION_SECRET is missing or too short. "
-        "Generate a secure secret and add it to your .env file."
-    )
-
-try:
-    SESSION_MAX_AGE = int(os.getenv("SESSION_MAX_AGE", "3600"))
-except ValueError as exc:
-    raise RuntimeError("SESSION_MAX_AGE must be an integer.") from exc
-
-if SESSION_MAX_AGE <= 0:
-    raise RuntimeError("SESSION_MAX_AGE must be greater than zero.")
-
-COOKIE_SECURE = (
-    os.getenv("COOKIE_SECURE", "false").strip().lower()
-    in {"true", "1", "yes", "on"}
-)
-
 from fastapi import Depends, FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
