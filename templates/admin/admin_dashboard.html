@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="AIDISIGHT — intelligent insights through a clean, modern digital platform.">
+  <title>AIDISIGHT — Admin Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../css/admin/admin_dashboard.css">
+</head>
+
+<body class="dashboard-page">
+  <aside class="sidebar" id="sidebar">
+    <a class="dash-brand" href="../index/index.html"><span class="brand-mark">A</span><span>AIDISIGHT</span></a>
+    <div class="side-label">OVERVIEW</div>
+    <nav><a class="active" href="#"><span>◈</span> Dashboard</a><a href="#"><span>◫</span> Users</a><a href="#"><span>◎</span> Activity</a><a href="#"><span>▣</span> Reports</a></nav>
+    <div class="side-label">MANAGEMENT</div>
+    <nav><a href="#"><span>◇</span> Insights</a><a href="#"><span>⚙</span> Settings</a></nav>
+    <div class="sidebar-bottom"><div class="profile-mini"><span>AT</span><div><strong>Admin</strong><small>Administrator</small></div></div><a href="../login/login.html" class="logout">↪ Sign out</a></div>
+  </aside>
+  <main class="dashboard-main">
+    <header class="dash-header"><button class="mobile-menu" id="mobileMenu">☰</button><div><span class="dash-kicker">ADMIN CONSOLE</span><h1>Good morning, Admin.</h1><p>Here's what's happening across AIDISIGHT.</p></div><div class="header-actions"><button class="icon-btn">⌕</button><button class="avatar">AT</button></div></header>
+    <section class="stat-grid">
+      <article class="stat-card"><span>Total users</span><strong>12,842</strong><em class="up">↑ 8.4%</em><div class="stat-icon">◌</div></article>
+      <article class="stat-card"><span>Active sessions</span><strong>1,284</strong><em class="up">↑ 14.2%</em><div class="stat-icon">◉</div></article>
+      <article class="stat-card"><span>Insights generated</span><strong>38,492</strong><em class="up">↑ 21.7%</em><div class="stat-icon">✦</div></article>
+      <article class="stat-card"><span>System health</span><strong>99.8%</strong><em class="stable">● Stable</em><div class="stat-icon">✓</div></article>
+    </section>
+    <section class="dashboard-grid">
+      <article class="panel activity-panel"><div class="panel-head"><div><span class="panel-kicker">PLATFORM ACTIVITY</span><h2>Insight generation</h2></div><select><option>Last 7 days</option><option>Last 30 days</option></select></div><div class="line-chart"><div class="chart-grid"></div><svg viewBox="0 0 760 250" preserveAspectRatio="none"><path d="M0 205 C50 195 75 160 115 178 S165 120 205 148 S260 104 300 128 S355 82 395 112 S450 58 490 94 S535 80 580 68 S630 98 665 52 S710 74 760 28" fill="none" stroke="#d96b7d" stroke-width="4"/><path d="M0 205 C50 195 75 160 115 178 S165 120 205 148 S260 104 300 128 S355 82 395 112 S450 58 490 94 S535 80 580 68 S630 98 665 52 S710 74 760 28 V250 H0 Z" fill="url(#adminArea)" opacity=".25"/><defs><linearGradient id="adminArea" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#d96b7d"/><stop offset="1" stop-color="#d96b7d" stop-opacity="0"/></linearGradient></defs></svg></div><div class="chart-labels"><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span></div></article>
+      <article class="panel"><div class="panel-head"><div><span class="panel-kicker">RECENT ACTIVITY</span><h2>Latest events</h2></div><a href="#">View all</a></div><div class="activity-list"><div><span class="activity-dot"></span><p><strong>New user registered</strong><small>2 minutes ago</small></p><b>+1</b></div><div><span class="activity-dot"></span><p><strong>Insight report generated</strong><small>18 minutes ago</small></p><b>+24</b></div><div><span class="activity-dot"></span><p><strong>System check completed</strong><small>41 minutes ago</small></p><b>OK</b></div><div><span class="activity-dot"></span><p><strong>New dataset processed</strong><small>1 hour ago</small></p><b>+8</b></div></div></article>
+      <article class="panel"><div class="panel-head"><div><span class="panel-kicker">USER OVERVIEW</span><h2>Growth</h2></div></div><div class="donut-wrap"><div class="donut"><div><strong>12.8K</strong><span>Total users</span></div></div><div class="legend"><p><i></i>Active <b>82%</b></p><p><i></i>New <b>12%</b></p><p><i></i>Inactive <b>6%</b></p></div></div></article>
+      <article class="panel"><div class="panel-head"><div><span class="panel-kicker">SYSTEM STATUS</span><h2>Services</h2></div></div><div class="service-list"><div><span><i class="status-dot"></i> API</span><b>Operational</b></div><div><span><i class="status-dot"></i> Database</span><b>Operational</b></div><div><span><i class="status-dot"></i> Analytics engine</span><b>Operational</b></div><div><span><i class="status-dot"></i> Notifications</span><b>Operational</b></div></div></article>
+    </section>
+  </main>
+  <script src="../../js/admin/admin.js"></script>
+</body>
+</html>
