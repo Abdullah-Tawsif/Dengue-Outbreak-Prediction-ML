@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="stylesheet" href="index.css" />
+  <link rel="stylesheet" href="/static/index.css" />
   <title>AIDISIGHT — Pathogens in Motion</title>
 
   <!-- Google Fonts: Plus Jakarta Sans + Cormorant Garamond + JetBrains Mono -->
@@ -71,6 +71,8 @@
           <a href="#palette" class="hover:text-cellularMist transition-colors">Palette</a>
           <a href="#pathogens" class="hover:text-cellularMist transition-colors">Insights</a>
           <a href="#contact" class="hover:text-cellularMist transition-colors">Contact</a>
+          <a href="/login" class="hover:text-plasmaRose transition-colors">Login</a>
+          <a href="/register" class="inline-flex items-center px-4 py-2 rounded-full border border-plasmaRose/50 text-cellularMist hover:bg-oxyHemoglobin/30 hover:border-plasmaRose transition-colors">Sign Up</a>
         </nav>
 
         <!-- Right Pill CTA + Mobile Hamburger -->
@@ -108,6 +110,8 @@
       <a href="#research" class="mobile-nav-link block text-sm text-cellularMist/80 hover:text-plasmaRose">Research</a>
       <a href="#palette" class="mobile-nav-link block text-sm text-cellularMist/80 hover:text-plasmaRose">Palette</a>
       <a href="#contact" class="mobile-nav-link block text-sm text-cellularMist/80 hover:text-plasmaRose">Contact</a>
+      <a href="/login" class="mobile-nav-link block text-sm text-cellularMist/80 hover:text-plasmaRose">Login</a>
+      <a href="/register" class="mobile-nav-link block text-sm text-cellularMist/80 hover:text-plasmaRose">Sign Up</a>
     </div>
   </header>
 
@@ -188,6 +192,12 @@
         </div>
 
         <div class="mt-8 flex flex-wrap items-center gap-3.5">
+          <a href="/register" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-clotShadow via-oxyHemoglobin to-plasmaRose text-cellularMist text-xs sm:text-sm font-medium hover:opacity-90 transition-opacity">
+            Create Account
+          </a>
+          <a href="/login" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-full border border-plasmaRose/40 bg-abyssalVein/60 text-cellularMist text-xs sm:text-sm hover:border-plasmaRose hover:bg-deepArterial/60 transition-colors">
+            Login
+          </a>
           <a href="#pathogens" class="inline-flex items-center gap-4 pl-6 pr-2.5 py-2.5 rounded-full pill-cta-crimson text-xs sm:text-sm font-medium text-cellularMist group">
             <span>Explore Pathogens</span>
             <span class="w-8 h-8 rounded-full bg-gradient-to-br from-plasmaRose to-oxyHemoglobin text-abyssalVein flex items-center justify-center group-hover:scale-105 transition-transform">
