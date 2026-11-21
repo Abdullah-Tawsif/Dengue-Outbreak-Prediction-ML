@@ -6,7 +6,7 @@ supplied; their meaning (weekly new cases or cumulative totals) is not inferred.
 
 Run from the repository root with::
 
-    python3 src/data/clean_data.py
+    python3 src/clean_data.py
 
 Optional positional arguments override the input and output CSV paths.
 """
@@ -18,17 +18,26 @@ import csv
 import math
 import sys
 from collections import defaultdict
-from datetime import datetime
+from datetime import date, datetime
 from pathlib import Path
 from typing import Any
 
 
-REPOSITORY_ROOT = Path(__file__).resolve().parents[2]
-DEFAULT_INPUT = Path(
-    "/home/mashhud/Downloads/"
-    "hackathon_preli_dataset - bangladesh_dengue_large_dataset.csv"
+REPOSITORY_ROOT = Path(__file__).resolve().parent.parent
+
+DEFAULT_INPUT = (
+    REPOSITORY_ROOT
+    / "data"
+    / "raw"
+    / "hackathon_preli_dataset - bangladesh_dengue_large_dataset.csv"
 )
-DEFAULT_OUTPUT = REPOSITORY_ROOT / "data" / "processed" / "cleaned_dengue_data.csv"
+
+DEFAULT_OUTPUT = (
+    REPOSITORY_ROOT
+    / "data"
+    / "processed"
+    / "dengue_dataset.csv"
+)
 
 REQUIRED_COLUMNS = {
     "date",
@@ -123,21 +132,74 @@ def _read_csv(path: Path) -> tuple[list[str], list[dict[str, str]]]:
     return columns, rows
 
 
-def _validate_missing(rows: list[dict[str, str]], columns: list[str]) -> None:
-    counts = {
-        column: sum(
+def _drop_rows_with_missing(
+    rows: list[dict[str, str]],
+    columns: list[str],
+) -> list[dict[str, str]]:
+    """Remove source rows containing missing values in any column."""
+
+    complete_rows = []
+    dropped_count = 0
+
+    for row in rows:
+        has_missing = any(
             row.get(column) is None
             or row[column].strip().lower() in MISSING_MARKERS
-            for row in rows
+            for column in columns
         )
-        for column in columns
-    }
-    missing = {column: count for column, count in counts.items() if count}
-    if missing:
+
+        if has_missing:
+            dropped_count += 1
+        else:
+            complete_rows.append(row)
+
+    if not complete_rows:
         raise DatasetValidationError(
-            "Missing values found; no values were imputed: "
-            f"{missing}"
+            "No complete rows remain after removing missing values."
         )
+
+    print(f"Original rows: {len(rows):,}")
+    print(f"Rows removed due to missing values: {dropped_count:,}")
+    print(f"Complete rows retained: {len(complete_rows):,}")
+
+    return complete_rows
+
+
+def _drop_incomplete_engineered_rows(
+    rows: list[dict[str, Any]],
+    columns: list[str],
+) -> list[dict[str, Any]]:
+    """Remove rows with missing source or engineered values before export."""
+
+    complete_rows: list[dict[str, Any]] = []
+    dropped_count = 0
+
+    for row in rows:
+        has_missing = any(
+            row.get(column) is None
+            or (
+                isinstance(row.get(column), str)
+                and row[column].strip().lower() in MISSING_MARKERS
+            )
+            for column in columns
+        )
+
+        if has_missing:
+            dropped_count += 1
+        else:
+            complete_rows.append(row)
+
+    if not complete_rows:
+        raise DatasetValidationError(
+            "No complete rows remain after feature engineering."
+        )
+
+    print("\nFINAL MISSING-VALUE CLEANING")
+    print(f"Engineered rows: {len(rows):,}")
+    print(f"Incomplete rows removed: {dropped_count:,}")
+    print(f"Complete rows retained: {len(complete_rows):,}")
+
+    return complete_rows
 
 
 def _validate_labels(rows: list[dict[str, str]]) -> None:
@@ -387,27 +449,59 @@ def _engineer_features(
     return enriched, output_columns
 
 
-def clean_dataset(input_path: Path, output_path: Path) -> tuple[list[dict[str, Any]], list[str]]:
+def clean_dataset(
+    input_path: Path,
+    output_path: Path,
+) -> tuple[list[dict[str, Any]], list[str]]:
+    """Clean source rows, engineer features, and export only complete rows."""
+
     if input_path.resolve() == output_path.resolve():
-        raise DatasetValidationError("Input and output paths must differ; refusing to overwrite input.")
+        raise DatasetValidationError(
+            "Input and output paths must differ; refusing to overwrite input."
+        )
+
+    # Read source data and remove records that are incomplete in the raw CSV.
     columns, rows = _read_csv(input_path)
-    _validate_missing(rows, columns)
+    rows = _drop_rows_with_missing(rows, columns)
+
+    # Validate source data before deriving historical features.
     _validate_labels(rows)
     parsed_dates = _parse_dates(rows)
     numeric_rows = _parse_numeric(rows)
     _validate_duplicates(rows, parsed_dates)
     _validate_weekly_continuity(rows, parsed_dates)
-    enriched, output_columns = _engineer_features(
-        rows, parsed_dates, numeric_rows, columns
-    )
-    if len(enriched) != len(rows):
-        raise AssertionError("Internal error: row count changed during feature creation.")
 
+    # Engineer lag and rolling-window features within each ward.
+    enriched, output_columns = _engineer_features(
+        rows,
+        parsed_dates,
+        numeric_rows,
+        columns,
+    )
+
+    if len(enriched) != len(rows):
+        raise AssertionError(
+            "Internal error: row count changed during feature creation."
+        )
+
+    # Feature engineering intentionally leaves early observations blank because
+    # prior weeks do not exist. Remove those rows before writing the training CSV.
+    enriched = _drop_incomplete_engineered_rows(
+        enriched,
+        output_columns,
+    )
+
+    # Write the final complete dataset.
     output_path.parent.mkdir(parents=True, exist_ok=True)
     with output_path.open("w", newline="", encoding="utf-8") as destination:
         writer = csv.DictWriter(destination, fieldnames=output_columns)
         writer.writeheader()
         writer.writerows(enriched)
+
+    print(f"\nFinal dataset saved: {output_path}")
+    print(f"Final dataset rows: {len(enriched):,}")
+    print(f"Final dataset columns: {len(output_columns):,}")
+
     return enriched, output_columns
 
 

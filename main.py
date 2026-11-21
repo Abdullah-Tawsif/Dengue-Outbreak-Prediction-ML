@@ -42,8 +42,63 @@ from fastapi import Depends, FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
-from mangum import Mangum
+# --------------------------------------------------
+# APPLICATION ENVIRONMENT AND SESSION CONFIGURATION
+# --------------------------------------------------
 
+APP_ENV = os.getenv("APP_ENV", "development").strip().lower()
+
+if APP_ENV not in {"development", "test", "production"}:
+    raise RuntimeError(
+        "APP_ENV must be development, test, or production."
+    )
+
+SESSION_SECRET = os.getenv("SESSION_SECRET", "").strip()
+
+if (
+    not SESSION_SECRET
+    or SESSION_SECRET == "replace_with_a_random_secret"
+    or len(SESSION_SECRET) < 32
+):
+    raise RuntimeError(
+        "SESSION_SECRET is missing or too short. "
+        "Generate a secure secret and add it to your .env file."
+    )
+
+try:
+    SESSION_MAX_AGE = int(os.getenv("SESSION_MAX_AGE", "3600"))
+except ValueError as exc:
+    raise RuntimeError("SESSION_MAX_AGE must be an integer.") from exc
+
+if SESSION_MAX_AGE <= 0:
+    raise RuntimeError("SESSION_MAX_AGE must be greater than zero.")
+
+# Secure cookies default to enabled in production.
+cookie_secure_raw = os.getenv("COOKIE_SECURE")
+
+if cookie_secure_raw is None:
+    COOKIE_SECURE = APP_ENV == "production"
+else:
+    cookie_secure_value = cookie_secure_raw.strip().lower()
+
+    if cookie_secure_value not in {
+        "true", "false", "1", "0", "yes", "no", "on", "off"
+    }:
+        raise RuntimeError(
+            "COOKIE_SECURE must be a valid boolean value."
+        )
+
+    COOKIE_SECURE = cookie_secure_value in {
+        "true", "1", "yes", "on"
+    }
+
+if APP_ENV == "production" and not COOKIE_SECURE:
+    raise RuntimeError(
+        "COOKIE_SECURE must be true in production. "
+        "Production session cookies must only be sent over HTTPS."
+    )
+
+from mangum import Mangum
 from src.backend.database import Base, engine
 from src.backend.models import User
 from src.backend.auth import router as auth_router
