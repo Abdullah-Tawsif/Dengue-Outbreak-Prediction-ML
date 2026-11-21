@@ -3,6 +3,7 @@
 from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from starlette.responses import RedirectResponse
 
 from src.backend.database import Base, engine
 
@@ -15,12 +16,13 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
 
+
 @app.get("/")
 async def home(request: Request):
     return templates.TemplateResponse(
         request=request,
         name="home/index.html",
-        context={},
+        context={}
     )
 
 
@@ -29,7 +31,7 @@ async def login(request: Request):
     return templates.TemplateResponse(
         request=request,
         name="auth/login.html",
-        context={},
+        context={}
     )
 
 
@@ -38,7 +40,7 @@ async def register(request: Request):
     return templates.TemplateResponse(
         request=request,
         name="auth/register.html",
-        context={},
+        context={}
     )
 
 
@@ -47,7 +49,7 @@ async def user_dashboard(request: Request):
     return templates.TemplateResponse(
         request=request,
         name="user/user_dashboard.html",
-        context={},
+        context={}
     )
 
 
@@ -55,8 +57,8 @@ async def user_dashboard(request: Request):
 async def admin_dashboard(request: Request):
     return templates.TemplateResponse(
         request=request,
-        name="admin/admin.html",
-        context={},
+        name="admin/admin_dashboard.html",
+        context={}
     )
 
 
@@ -66,5 +68,4 @@ Base.metadata.create_all(bind=engine)
 
 # Vercel Python Function ASGI adapter.
 from mangum import Mangum
-
 handler = Mangum(app)
