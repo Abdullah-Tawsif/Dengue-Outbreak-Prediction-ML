@@ -10,3 +10,19 @@ passlib[bcrypt]
 python-dotenv
 mangum
 joblib
+
+# Database migrations
+alembic
+
+# Password security
+pwdlib[argon2]
+
+# Session security
+itsdangerous
+
+# Email validation
+email-validator
+
+# Testing
+pytest
+httpx
