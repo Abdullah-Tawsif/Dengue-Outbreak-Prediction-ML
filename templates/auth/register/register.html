@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -5,32 +6,175 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="AEDISIGHT — intelligent insights through a clean, modern digital platform.">
   <title>AEDISIGHT — Register</title>
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
   <link rel="stylesheet" href="/static/css/register/register.css">
-  <script src="/static/js/register/register.js"></script>
 </head>
 
 <body class="auth-page">
-  <div class="auth-orb orb-a"></div><div class="auth-orb orb-b"></div><div class="auth-orb orb-c"></div>
-  <a class="back-home" href="../index/index.html">← Back to Home</a>
+  <div class="auth-orb orb-a"></div>
+  <div class="auth-orb orb-b"></div>
+  <div class="auth-orb orb-c"></div>
+
+  <a class="back-home" href="/">← Back to Home</a>
+
   <main class="auth-shell">
     <section class="glass-card register-card">
-      <a class="auth-brand" href="../index/index.html"><span class="brand-mark">A</span><span>AEDISIGHT</span></a>
-      <div class="auth-header"><span class="auth-kicker">GET STARTED</span><h1>Create account.</h1><p>Build your workspace and start turning information into insight.</p></div>
-      <form id="registerForm" novalidate>
-        <div class="field"><label for="fullName">Full name</label><input id="fullName" type="text" placeholder="Your full name" autocomplete="name" required><small class="field-error"></small></div>
-        <div class="field"><label for="email">Email address</label><input id="email" type="email" placeholder="you@example.com" autocomplete="email" required><small class="field-error"></small></div>
-        <div class="field"><label for="password">Password</label><div class="password-wrap"><input id="password" type="password" placeholder="Create a password" autocomplete="new-password" required minlength="8"><button class="eye-btn" type="button" data-target="password" aria-label="Show password">◉</button></div><div class="password-meter"><span id="meterBar"></span></div><small id="passwordHint">Use 8+ characters with a mix of letters and numbers.</small></div>
-        <div class="field"><label for="confirmPassword">Confirm password</label><div class="password-wrap"><input id="confirmPassword" type="password" placeholder="Repeat your password" autocomplete="new-password" required><button class="eye-btn" type="button" data-target="confirmPassword" aria-label="Show password">◉</button></div><small class="match-status" id="matchStatus"></small></div>
-        <label class="check terms"><input type="checkbox" id="terms" required> <span>I agree to the platform terms and privacy policy.</span></label>
-        <button class="submit-btn" type="submit">Create account <span>→</span></button>
-        <p class="form-status" id="formStatus" role="status"></p>
+
+      <a class="auth-brand" href="/">
+        <span class="brand-mark">A</span>
+        <span>AEDISIGHT</span>
+      </a>
+
+      <div class="auth-header">
+        <span class="auth-kicker">GET STARTED</span>
+        <h1>Create account.</h1>
+        <p>Register your hospital account to access AEDISIGHT.</p>
+      </div>
+
+      <form id="registerForm" action="/register" method="post">
+
+        <input
+          type="hidden"
+          name="csrf_token"
+          value="{{ csrf_token }}"
+        >
+
+        <div class="field">
+          <label for="fullName">Full name</label>
+          <input
+            id="fullName"
+            name="full_name"
+            type="text"
+            placeholder="Your full name"
+            autocomplete="name"
+            maxlength="150"
+            required
+          >
+          <small class="field-error"></small>
+        </div>
+
+        <div class="field">
+          <label for="hospitalName">Hospital name</label>
+          <input
+            id="hospitalName"
+            name="hospital_name"
+            type="text"
+            placeholder="Your hospital name"
+            autocomplete="organization"
+            maxlength="255"
+            required
+          >
+          <small class="field-error"></small>
+        </div>
+
+        <div class="field">
+          <label for="email">Email address</label>
+          <input
+            id="email"
+            name="email"
+            type="email"
+            placeholder="you@example.com"
+            autocomplete="email"
+            maxlength="255"
+            required
+          >
+          <small class="field-error"></small>
+        </div>
+
+        <div class="field">
+          <label for="password">Password</label>
+
+          <div class="password-wrap">
+            <input
+              id="password"
+              name="password"
+              type="password"
+              placeholder="Create a password"
+              autocomplete="new-password"
+              minlength="8"
+              maxlength="128"
+              required
+            >
+            <button
+              class="eye-btn"
+              type="button"
+              data-target="password"
+              aria-label="Show password"
+            >◉</button>
+          </div>
+
+          <div class="password-meter">
+            <span id="meterBar"></span>
+          </div>
+
+          <small id="passwordHint">
+            Use 8+ characters with a mix of letters and numbers.
+          </small>
+          <small class="field-error"></small>
+        </div>
+
+        <div class="field">
+          <label for="confirmPassword">Confirm password</label>
+
+          <div class="password-wrap">
+            <input
+              id="confirmPassword"
+              name="confirm_password"
+              type="password"
+              placeholder="Repeat your password"
+              autocomplete="new-password"
+              minlength="8"
+              maxlength="128"
+              required
+            >
+            <button
+              class="eye-btn"
+              type="button"
+              data-target="confirmPassword"
+              aria-label="Show password"
+            >◉</button>
+          </div>
+
+          <small class="match-status" id="matchStatus"></small>
+        </div>
+
+        <label class="check terms">
+          <input
+            type="checkbox"
+            id="terms"
+            name="terms_accepted"
+            value="on"
+            required
+          >
+          <span>I agree to the platform terms and privacy policy.</span>
+        </label>
+
+        <button class="submit-btn" type="submit">
+          Create account <span>→</span>
+        </button>
+
+        <p class="form-status" id="formStatus" role="status" aria-live="polite">
+          {% if request.query_params.get('message') %}
+            {{ request.query_params.get('message') }}
+          {% elif request.query_params.get('error') %}
+            {{ request.query_params.get('error') }}
+          {% endif %}
+        </p>
+
       </form>
-      <div class="auth-switch">Already have an account? <a href="../login/login.html">Sign in</a></div>
+
+      <div class="auth-switch">
+        Already have an account?
+        <a href="/login">Sign in</a>
+      </div>
+
     </section>
   </main>
-  <script src="../../js/register/register.js"></script>
+
+  <script src="/static/js/register/register.js" defer></script>
 </body>
 </html>

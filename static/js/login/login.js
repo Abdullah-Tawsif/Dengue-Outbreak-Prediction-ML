@@ -1,5 +1,15 @@
 
-const form=document.getElementById('loginForm'),status=document.getElementById('formStatus');
-document.querySelectorAll('.eye-btn').forEach(btn=>btn.addEventListener('click',()=>{const input=document.getElementById(btn.dataset.target);input.type=input.type==='password'?'text':'password';btn.setAttribute('aria-label',input.type==='password'?'Show password':'Hide password')}));
-form.addEventListener('submit',e=>{e.preventDefault();let valid=true;form.querySelectorAll('.field').forEach(field=>{const input=field.querySelector('input'),error=field.querySelector('.field-error');if(!input.checkValidity()){valid=false;error.textContent=input.type==='email'?'Enter a valid email address.':'Password is required.'}else error.textContent=''});if(valid){status.textContent='Demo login validated successfully.';status.style.color='#8fc59d'}else{status.textContent='Please correct the highlighted fields.';status.style.color='#e88998'}});
-document.getElementById('forgotLink').addEventListener('click',e=>{e.preventDefault();status.textContent='Password recovery would open here.';status.style.color='#d96b7d'});
+const form = document.getElementById("loginForm");
+
+document.querySelectorAll(".eye-btn").forEach((button) => {
+    button.addEventListener("click", () => {
+        const input = document.getElementById(button.dataset.target);
+
+        input.type = input.type === "password" ? "text" : "password";
+
+        button.setAttribute(
+            "aria-label",
+            input.type === "password" ? "Show password" : "Hide password"
+        );
+    });
+});

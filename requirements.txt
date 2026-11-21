@@ -10,6 +10,7 @@ passlib[bcrypt]
 python-dotenv
 mangum
 joblib
+catboost
 
 # Database migrations
 alembic
