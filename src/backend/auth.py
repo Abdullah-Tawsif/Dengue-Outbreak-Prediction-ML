@@ -96,7 +96,7 @@ def register_user(
         )
 
     # 2. Clean user information.
-    full_name = full_name.strip()
+    full_name = " ".join(full_name.split()).title()
     hospital_name = hospital_name.strip()
 
     # 3. Validate required fields.

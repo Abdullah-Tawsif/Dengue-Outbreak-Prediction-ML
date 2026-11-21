@@ -1,60 +1,213 @@
+"use strict";
 
-const form = document.getElementById("registerForm");
-const password = document.getElementById("password");
-const confirmPassword = document.getElementById("confirmPassword");
-const meterBar = document.getElementById("meterBar");
-const matchStatus = document.getElementById("matchStatus");
+document.addEventListener("DOMContentLoaded", () => {
 
-document.querySelectorAll(".eye-btn").forEach((button) => {
-    button.addEventListener("click", () => {
-        const input = document.getElementById(button.dataset.target);
+    const form = document.getElementById("registerForm");
 
-        input.type = input.type === "password" ? "text" : "password";
+    const fullName = document.getElementById("fullName");
+    const password = document.getElementById("password");
+    const confirmPassword = document.getElementById("confirmPassword");
 
-        button.setAttribute(
-            "aria-label",
-            input.type === "password" ? "Show password" : "Hide password"
-        );
+    const meterBar = document.getElementById("meterBar");
+    const matchStatus = document.getElementById("matchStatus");
+
+
+    // ------------------------------------------
+    // PASSWORD SHOW / HIDE
+    // ------------------------------------------
+
+    document.querySelectorAll(".password-toggle").forEach((button) => {
+
+        button.addEventListener("click", () => {
+
+            const targetId = button.dataset.target;
+            const input = document.getElementById(targetId);
+
+            if (!input) {
+                console.error("Password input not found:", targetId);
+                return;
+            }
+
+            const passwordIsHidden = input.type === "password";
+
+            input.type = passwordIsHidden ? "text" : "password";
+
+            button.textContent = passwordIsHidden ? "Hide" : "Show";
+
+            button.setAttribute(
+                "aria-label",
+                passwordIsHidden ? "Hide password" : "Show password"
+            );
+
+        });
+
     });
-});
 
-function updatePasswordStrength() {
-    let score = 0;
 
-    if (password.value.length >= 8) score++;
-    if (/[A-Z]/.test(password.value)) score++;
-    if (/[0-9]/.test(password.value)) score++;
-    if (/[^A-Za-z0-9]/.test(password.value)) score++;
+    // ------------------------------------------
+    // CAPITALIZE NAME INITIALS
+    // ------------------------------------------
 
-    meterBar.style.width = `${score * 25}%`;
+    function capitalizeNameWords(value) {
 
-    meterBar.style.background =
-        score < 2 ? "#9e1b32" :
-        score < 4 ? "#c56b78" :
-        "#7eb78f";
-}
+        return value
+            .toLocaleLowerCase()
+            .replace(
+                /(^|[\s'-])(\p{L})/gu,
+                (match, separator, initial) => {
+                    return separator + initial.toLocaleUpperCase();
+                }
+            );
 
-function checkPasswordMatch() {
-    if (!confirmPassword.value) {
-        matchStatus.textContent = "";
-        confirmPassword.setCustomValidity("");
-        return;
     }
 
-    if (password.value === confirmPassword.value) {
-        matchStatus.textContent = "✓ Passwords match";
-        matchStatus.style.color = "#8fc59d";
-        confirmPassword.setCustomValidity("");
-    } else {
-        matchStatus.textContent = "Passwords do not match";
-        matchStatus.style.color = "#e88998";
-        confirmPassword.setCustomValidity("Passwords do not match.");
+
+    if (fullName) {
+
+        fullName.addEventListener("input", () => {
+
+            const cursorPosition = fullName.selectionStart;
+
+            const formatted = capitalizeNameWords(fullName.value);
+
+            if (formatted !== fullName.value) {
+
+                fullName.value = formatted;
+
+                if (cursorPosition !== null) {
+                    fullName.setSelectionRange(
+                        cursorPosition,
+                        cursorPosition
+                    );
+                }
+
+            }
+
+        });
+
+        fullName.addEventListener("blur", () => {
+
+            fullName.value = capitalizeNameWords(fullName.value)
+                .trim()
+                .replace(/\s+/g, " ");
+
+        });
+
     }
-}
 
-password.addEventListener("input", () => {
-    updatePasswordStrength();
-    checkPasswordMatch();
+
+    // ------------------------------------------
+    // PASSWORD STRENGTH
+    // ------------------------------------------
+
+    function updatePasswordStrength() {
+
+        if (!password || !meterBar) {
+            return;
+        }
+
+        let score = 0;
+
+        if (password.value.length >= 8) score++;
+        if (/[A-Z]/.test(password.value)) score++;
+        if (/[0-9]/.test(password.value)) score++;
+        if (/[^A-Za-z0-9]/.test(password.value)) score++;
+
+        meterBar.style.width = `${score * 25}%`;
+
+        meterBar.style.background =
+            score < 2 ? "#9e1b32" :
+            score < 4 ? "#c56b78" :
+            "#7eb78f";
+
+    }
+
+
+    // ------------------------------------------
+    // CONFIRM PASSWORD
+    // ------------------------------------------
+
+    function checkPasswordMatch() {
+
+        if (!password || !confirmPassword || !matchStatus) {
+            return;
+        }
+
+        if (!confirmPassword.value) {
+
+            matchStatus.textContent = "";
+
+            confirmPassword.setCustomValidity("");
+
+            return;
+        }
+
+        if (password.value === confirmPassword.value) {
+
+            matchStatus.textContent = "✓ Passwords match";
+
+            matchStatus.style.color = "#8fc59d";
+
+            confirmPassword.setCustomValidity("");
+
+        } else {
+
+            matchStatus.textContent = "Passwords do not match";
+
+            matchStatus.style.color = "#e88998";
+
+            confirmPassword.setCustomValidity(
+                "Passwords do not match."
+            );
+
+        }
+
+    }
+
+
+    if (password) {
+        password.addEventListener("input", () => {
+            updatePasswordStrength();
+            checkPasswordMatch();
+        });
+    }
+
+    if (confirmPassword) {
+        confirmPassword.addEventListener(
+            "input",
+            checkPasswordMatch
+        );
+    }
+
+
+    // ------------------------------------------
+    // FINAL VALIDATION BEFORE SUBMISSION
+    // ------------------------------------------
+
+    if (form) {
+
+        form.addEventListener("submit", (event) => {
+
+            if (fullName) {
+
+                fullName.value = capitalizeNameWords(fullName.value)
+                    .trim()
+                    .replace(/\s+/g, " ");
+
+            }
+
+            checkPasswordMatch();
+
+            if (!form.checkValidity()) {
+
+                event.preventDefault();
+
+                form.reportValidity();
+
+            }
+
+        });
+
+    }
+
 });
-
-confirmPassword.addEventListener("input", checkPasswordMatch);

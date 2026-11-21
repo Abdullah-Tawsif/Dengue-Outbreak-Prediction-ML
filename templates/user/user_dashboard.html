@@ -1,37 +1,450 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="AEDISIGHT — intelligent insights through a clean, modern digital platform.">
+
+  <meta
+    name="description"
+    content="AEDISIGHT — intelligent insights through a clean, modern digital platform."
+  >
+
   <title>AEDISIGHT — User Dashboard</title>
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/static/css/user/user_dashboard.css">
- <script src="/static/js/user/user.js"></script>
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet"
+  >
+
+  <link
+    rel="stylesheet"
+    href="/static/css/user/user_dashboard.css"
+  >
+
+  <style>
+    .logout-form {
+      margin: 0;
+    }
+
+    button.logout {
+      appearance: none;
+      display: block;
+      width: 100%;
+      border: 0;
+      background: transparent;
+      text-align: left;
+      font-family: inherit;
+      font-size: 9px;
+      cursor: pointer;
+    }
+  </style>
+
+  <script
+    src="/static/js/user/user.js"
+    defer
+  ></script>
 </head>
 
 <body class="dashboard-page">
+
+  <!-- SIDEBAR -->
+
   <aside class="sidebar" id="sidebar">
-    <a class="dash-brand" href="../index/index.html"><span class="brand-mark">A</span><span>AEDISIGHT</span></a>
+
+    <a class="dash-brand" href="/">
+      <span class="brand-mark">A</span>
+      <span>AEDISIGHT</span>
+    </a>
+
     <div class="side-label">WORKSPACE</div>
-    <nav><a class="active" href="#"><span>◈</span> Overview</a><a href="#"><span>⌁</span> My insights</a><a href="#"><span>▣</span> Reports</a><a href="#"><span>◇</span> Saved items</a></nav>
+
+    <nav>
+      <a class="active" href="#">
+        <span>◈</span> Overview
+      </a>
+
+      <a href="#">
+        <span>⌁</span> My insights
+      </a>
+
+      <a href="#">
+        <span>▣</span> Reports
+      </a>
+
+      <a href="#">
+        <span>◇</span> Saved items
+      </a>
+    </nav>
+
     <div class="side-label">ACCOUNT</div>
-    <nav><a href="#"><span>⚙</span> Settings</a><a href="#"><span>?</span> Help center</a></nav>
-    <div class="sidebar-bottom"><div class="profile-mini"><span>AT</span><div><strong>Abdullah</strong><small>Member</small></div></div><a href="../login/login.html" class="logout">↪ Sign out</a></div>
+
+    <nav>
+      <a href="#">
+        <span>⚙</span> Settings
+      </a>
+
+      <a href="#">
+        <span>?</span> Help center
+      </a>
+    </nav>
+
+    <div class="sidebar-bottom">
+
+      <div class="profile-mini">
+
+        <span>{{ current_user.full_name[:2]|upper }}</span>
+
+        <div>
+          <strong>{{ current_user.full_name }}</strong>
+          <small>{{ current_user.hospital_name }}</small>
+        </div>
+
+      </div>
+
+      <!-- SECURE LOGOUT -->
+
+      <form
+        action="/logout"
+        method="post"
+        class="logout-form"
+      >
+        <input
+          type="hidden"
+          name="csrf_token"
+          value="{{ csrf_token }}"
+        >
+
+        <button type="submit" class="logout">
+          ↪ Sign out
+        </button>
+      </form>
+
+    </div>
+
   </aside>
+
+
+  <!-- MAIN DASHBOARD -->
+
   <main class="dashboard-main">
-    <header class="dash-header"><button class="mobile-menu" id="mobileMenu">☰</button><div><span class="dash-kicker">YOUR WORKSPACE</span><h1>Good morning, Abdullah.</h1><p>Here is a quick view of your latest intelligence.</p></div><div class="header-actions"><button class="icon-btn">⌕</button><button class="avatar">AT</button></div></header>
-    <section class="welcome-card"><div><span class="panel-kicker">YOUR AEDISIGHT SNAPSHOT</span><h2>Stay close to what matters.</h2><p>Your workspace is up to date. Review recent signals or create a new insight.</p><div class="welcome-actions"><button class="primary-btn">+ New insight</button><button class="ghost-btn">View reports</button></div></div><div class="orb-chart"><div class="ring r1"></div><div class="ring r2"></div><div class="ring r3"></div><span>92.4<small>score</small></span></div></section>
-    <section class="stat-grid"><article class="stat-card"><span>Insights</span><strong>48</strong><em class="up">↑ 12 this month</em></article><article class="stat-card"><span>Saved reports</span><strong>16</strong><em>Last saved 2h ago</em></article><article class="stat-card"><span>Avg. confidence</span><strong>94.7%</strong><em class="up">↑ 3.2%</em></article><article class="stat-card"><span>Active alerts</span><strong>04</strong><em class="alert">2 need review</em></article></section>
-    <section class="dashboard-grid">
-      <article class="panel activity-panel"><div class="panel-head"><div><span class="panel-kicker">PERFORMANCE</span><h2>Insight activity</h2></div><select><option>7 days</option><option>30 days</option></select></div><div class="line-chart"><div class="chart-grid"></div><svg viewBox="0 0 760 250" preserveAspectRatio="none"><path d="M0 185 C45 200 70 125 115 160 S165 82 205 132 S250 112 300 142 S350 62 395 100 S445 76 490 115 S545 54 580 92 S635 120 665 64 S720 82 760 35" fill="none" stroke="#d96b7d" stroke-width="4"/></svg></div><div class="chart-labels"><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span></div></article>
-      <article class="panel"><div class="panel-head"><div><span class="panel-kicker">RECENT INSIGHTS</span><h2>Latest work</h2></div><a href="#">View all</a></div><div class="insight-list"><div class="insight-item"><span class="type-icon">✦</span><div><strong>Weekly signal overview</strong><small>Generated today · 94% confidence</small></div><span class="arrow">→</span></div><div class="insight-item"><span class="type-icon">◈</span><div><strong>Trend analysis report</strong><small>Yesterday · 91% confidence</small></div><span class="arrow">→</span></div><div class="insight-item"><span class="type-icon">⌁</span><div><strong>Activity summary</strong><small>2 days ago · 97% confidence</small></div><span class="arrow">→</span></div></div></article>
-      <article class="panel"><div class="panel-head"><div><span class="panel-kicker">QUICK ACTIONS</span><h2>Continue working</h2></div></div><div class="quick-grid"><button><span>+</span><strong>New insight</strong><small>Start a fresh analysis</small></button><button><span>↗</span><strong>Upload data</strong><small>Add new information</small></button><button><span>▣</span><strong>Reports</strong><small>Browse your reports</small></button><button><span>◇</span><strong>Saved</strong><small>Open saved items</small></button></div></article>
-      <article class="panel tip-panel"><span class="panel-kicker">AEDISIGHT TIP</span><h2>Keep your signals focused.</h2><p>Clear inputs produce clearer insights. Add context when starting a new analysis to improve the quality of your results.</p><a href="#">Learn more →</a></article>
+
+    <!-- HEADER -->
+
+    <header class="dash-header">
+
+      <button class="mobile-menu" id="mobileMenu">
+        ☰
+      </button>
+
+      <div>
+
+        <span class="dash-kicker">
+          YOUR WORKSPACE
+        </span>
+
+        <h1>
+          Welcome, {{ current_user.full_name }}.
+        </h1>
+
+        <p>
+          Here is a quick view of your latest intelligence.
+        </p>
+
+      </div>
+
+      <div class="header-actions">
+
+        <button class="icon-btn">
+          ⌕
+        </button>
+
+        <button class="avatar">
+          {{ current_user.full_name[:2]|upper }}
+        </button>
+
+      </div>
+
+    </header>
+
+
+    <!-- WELCOME CARD -->
+
+    <section class="welcome-card">
+
+      <div>
+
+        <span class="panel-kicker">
+          YOUR AEDISIGHT SNAPSHOT
+        </span>
+
+        <h2>
+          Stay close to what matters.
+        </h2>
+
+        <p>
+          Your workspace is up to date.
+          Review recent signals or create a new insight.
+        </p>
+
+        <div class="welcome-actions">
+
+          <button class="primary-btn">
+            + New insight
+          </button>
+
+          <button class="ghost-btn">
+            View reports
+          </button>
+
+        </div>
+
+      </div>
+
+      <div class="orb-chart">
+
+        <div class="ring r1"></div>
+        <div class="ring r2"></div>
+        <div class="ring r3"></div>
+
+        <span>
+          92.4
+          <small>score</small>
+        </span>
+
+      </div>
+
     </section>
+
+
+    <!-- STATISTICS -->
+
+    <section class="stat-grid">
+
+      <article class="stat-card">
+        <span>Insights</span>
+        <strong>48</strong>
+        <em class="up">↑ 12 this month</em>
+      </article>
+
+      <article class="stat-card">
+        <span>Saved reports</span>
+        <strong>16</strong>
+        <em>Last saved 2h ago</em>
+      </article>
+
+      <article class="stat-card">
+        <span>Avg. confidence</span>
+        <strong>94.7%</strong>
+        <em class="up">↑ 3.2%</em>
+      </article>
+
+      <article class="stat-card">
+        <span>Active alerts</span>
+        <strong>04</strong>
+        <em class="alert">2 need review</em>
+      </article>
+
+    </section>
+
+
+    <!-- DASHBOARD CONTENT -->
+
+    <section class="dashboard-grid">
+
+      <!-- ACTIVITY -->
+
+      <article class="panel activity-panel">
+
+        <div class="panel-head">
+
+          <div>
+            <span class="panel-kicker">
+              PERFORMANCE
+            </span>
+
+            <h2>Insight activity</h2>
+          </div>
+
+          <select>
+            <option>7 days</option>
+            <option>30 days</option>
+          </select>
+
+        </div>
+
+        <div class="line-chart">
+
+          <div class="chart-grid"></div>
+
+          <svg
+            viewBox="0 0 760 250"
+            preserveAspectRatio="none"
+          >
+
+            <path
+              d="M0 185 C45 200 70 125 115 160 S165 82 205 132 S250 112 300 142 S350 62 395 100 S445 76 490 115 S545 54 580 92 S635 120 665 64 S720 82 760 35"
+              fill="none"
+              stroke="#d96b7d"
+              stroke-width="4"
+            />
+
+          </svg>
+
+        </div>
+
+        <div class="chart-labels">
+          <span>Mon</span>
+          <span>Tue</span>
+          <span>Wed</span>
+          <span>Thu</span>
+          <span>Fri</span>
+          <span>Sat</span>
+          <span>Sun</span>
+        </div>
+
+      </article>
+
+
+      <!-- RECENT INSIGHTS -->
+
+      <article class="panel">
+
+        <div class="panel-head">
+
+          <div>
+            <span class="panel-kicker">
+              RECENT INSIGHTS
+            </span>
+
+            <h2>Latest work</h2>
+          </div>
+
+          <a href="#">View all</a>
+
+        </div>
+
+        <div class="insight-list">
+
+          <div class="insight-item">
+
+            <span class="type-icon">✦</span>
+
+            <div>
+              <strong>Weekly signal overview</strong>
+              <small>Generated today · 94% confidence</small>
+            </div>
+
+            <span class="arrow">→</span>
+
+          </div>
+
+          <div class="insight-item">
+
+            <span class="type-icon">◈</span>
+
+            <div>
+              <strong>Trend analysis report</strong>
+              <small>Yesterday · 91% confidence</small>
+            </div>
+
+            <span class="arrow">→</span>
+
+          </div>
+
+          <div class="insight-item">
+
+            <span class="type-icon">⌁</span>
+
+            <div>
+              <strong>Activity summary</strong>
+              <small>2 days ago · 97% confidence</small>
+            </div>
+
+            <span class="arrow">→</span>
+
+          </div>
+
+        </div>
+
+      </article>
+
+
+      <!-- QUICK ACTIONS -->
+
+      <article class="panel">
+
+        <div class="panel-head">
+
+          <div>
+            <span class="panel-kicker">
+              QUICK ACTIONS
+            </span>
+
+            <h2>Continue working</h2>
+          </div>
+
+        </div>
+
+        <div class="quick-grid">
+
+          <button>
+            <span>+</span>
+            <strong>New insight</strong>
+            <small>Start a fresh analysis</small>
+          </button>
+
+          <button>
+            <span>↗</span>
+            <strong>Upload data</strong>
+            <small>Add new information</small>
+          </button>
+
+          <button>
+            <span>▣</span>
+            <strong>Reports</strong>
+            <small>Browse your reports</small>
+          </button>
+
+          <button>
+            <span>◇</span>
+            <strong>Saved</strong>
+            <small>Open saved items</small>
+          </button>
+
+        </div>
+
+      </article>
+
+
+      <!-- TIP -->
+
+      <article class="panel tip-panel">
+
+        <span class="panel-kicker">
+          AEDISIGHT TIP
+        </span>
+
+        <h2>
+          Keep your signals focused.
+        </h2>
+
+        <p>
+          Clear inputs produce clearer insights.
+          Add context when starting a new analysis to
+          improve the quality of your results.
+        </p>
+
+        <a href="#">Learn more →</a>
+
+      </article>
+
+    </section>
+
   </main>
-  <script src="../../js/user/user.js"></script>
+
 </body>
 </html>

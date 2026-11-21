@@ -1,180 +1,286 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="AEDISIGHT — intelligent insights through a clean, modern digital platform.">
-  <title>AEDISIGHT — Register</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <meta name="description" content="Create your AEDISIGHT hospital account">
 
-  <link rel="stylesheet" href="/static/css/register/register.css">
+    <title>AEDISIGHT | Create Account</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="/static/css/register/register.css?v=3">
+
+    <script src="/static/js/register/register.js?v=3" defer></script>
 </head>
 
 <body class="auth-page">
-  <div class="auth-orb orb-a"></div>
-  <div class="auth-orb orb-b"></div>
-  <div class="auth-orb orb-c"></div>
 
-  <a class="back-home" href="/">← Back to Home</a>
+    <div class="auth-orb orb-a"></div>
+    <div class="auth-orb orb-b"></div>
+    <div class="auth-orb orb-c"></div>
 
-  <main class="auth-shell">
-    <section class="glass-card register-card">
+    <!-- BACK TO HOME -->
 
-      <a class="auth-brand" href="/">
-        <span class="brand-mark">A</span>
-        <span>AEDISIGHT</span>
-      </a>
+    <a class="back-home" href="/">
+        <span class="back-icon">←</span>
+        <span>Back to Home</span>
+    </a>
 
-      <div class="auth-header">
-        <span class="auth-kicker">GET STARTED</span>
-        <h1>Create account.</h1>
-        <p>Register your hospital account to access AEDISIGHT.</p>
-      </div>
+    <main class="auth-shell">
 
-      <form id="registerForm" action="/register" method="post">
+        <section class="glass-card register-card">
 
-        <input
-          type="hidden"
-          name="csrf_token"
-          value="{{ csrf_token }}"
-        >
+            <!-- AEDISIGHT BRAND -->
 
-        <div class="field">
-          <label for="fullName">Full name</label>
-          <input
-            id="fullName"
-            name="full_name"
-            type="text"
-            placeholder="Your full name"
-            autocomplete="name"
-            maxlength="150"
-            required
-          >
-          <small class="field-error"></small>
-        </div>
+            <a class="auth-brand" href="/" aria-label="AEDISIGHT home">
 
-        <div class="field">
-          <label for="hospitalName">Hospital name</label>
-          <input
-            id="hospitalName"
-            name="hospital_name"
-            type="text"
-            placeholder="Your hospital name"
-            autocomplete="organization"
-            maxlength="255"
-            required
-          >
-          <small class="field-error"></small>
-        </div>
+                <span class="brand-symbol">
+                    <svg viewBox="0 0 48 48" role="img" aria-hidden="true">
+                        <path d="M8 37 L23 8 L40 37"
+                              fill="none"
+                              stroke="currentColor"
+                              stroke-width="4"
+                              stroke-linecap="round"
+                              stroke-linejoin="round"/>
+                        <path d="M15 27 H33"
+                              fill="none"
+                              stroke="#D96B7D"
+                              stroke-width="4"
+                              stroke-linecap="round"/>
+                        <circle cx="24" cy="37" r="3" fill="#D96B7D"/>
+                    </svg>
+                </span>
 
-        <div class="field">
-          <label for="email">Email address</label>
-          <input
-            id="email"
-            name="email"
-            type="email"
-            placeholder="you@example.com"
-            autocomplete="email"
-            maxlength="255"
-            required
-          >
-          <small class="field-error"></small>
-        </div>
+                <span class="brand-copy">
+                    <strong>AEDISIGHT</strong>
+                    <small>HEALTH INTELLIGENCE</small>
+                </span>
 
-        <div class="field">
-          <label for="password">Password</label>
+            </a>
 
-          <div class="password-wrap">
-            <input
-              id="password"
-              name="password"
-              type="password"
-              placeholder="Create a password"
-              autocomplete="new-password"
-              minlength="8"
-              maxlength="128"
-              required
-            >
-            <button
-              class="eye-btn"
-              type="button"
-              data-target="password"
-              aria-label="Show password"
-            >◉</button>
-          </div>
+            <!-- HEADER -->
 
-          <div class="password-meter">
-            <span id="meterBar"></span>
-          </div>
+            <div class="auth-header">
 
-          <small id="passwordHint">
-            Use 8+ characters with a mix of letters and numbers.
-          </small>
-          <small class="field-error"></small>
-        </div>
+                <span class="auth-kicker">
+                    GET STARTED
+                </span>
 
-        <div class="field">
-          <label for="confirmPassword">Confirm password</label>
+                <h1>Create account.</h1>
 
-          <div class="password-wrap">
-            <input
-              id="confirmPassword"
-              name="confirm_password"
-              type="password"
-              placeholder="Repeat your password"
-              autocomplete="new-password"
-              minlength="8"
-              maxlength="128"
-              required
-            >
-            <button
-              class="eye-btn"
-              type="button"
-              data-target="confirmPassword"
-              aria-label="Show password"
-            >◉</button>
-          </div>
+                <p>
+                    Register your hospital account to access AEDISIGHT.
+                </p>
 
-          <small class="match-status" id="matchStatus"></small>
-        </div>
+            </div>
 
-        <label class="check terms">
-          <input
-            type="checkbox"
-            id="terms"
-            name="terms_accepted"
-            value="on"
-            required
-          >
-          <span>I agree to the platform terms and privacy policy.</span>
-        </label>
+            <!-- REGISTRATION FORM -->
 
-        <button class="submit-btn" type="submit">
-          Create account <span>→</span>
-        </button>
+            <form id="registerForm" action="/register" method="post">
 
-        <p class="form-status" id="formStatus" role="status" aria-live="polite">
-          {% if request.query_params.get('message') %}
-            {{ request.query_params.get('message') }}
-          {% elif request.query_params.get('error') %}
-            {{ request.query_params.get('error') }}
-          {% endif %}
-        </p>
+                <input
+                    type="hidden"
+                    name="csrf_token"
+                    value="{{ csrf_token }}"
+                >
 
-      </form>
+                <!-- FULL NAME -->
 
-      <div class="auth-switch">
-        Already have an account?
-        <a href="/login">Sign in</a>
-      </div>
+                <div class="field">
 
-    </section>
-  </main>
+                    <label for="fullName">Full name</label>
 
-  <script src="/static/js/register/register.js" defer></script>
+                    <input
+                        id="fullName"
+                        name="full_name"
+                        type="text"
+                        placeholder="Example: Mashhud Farah"
+                        autocomplete="name"
+                        autocapitalize="words"
+                        spellcheck="false"
+                        maxlength="150"
+                        required
+                    >
+
+                    <small class="field-hint">
+                        The first letter of each name will be capitalized.
+                    </small>
+
+                </div>
+
+                <!-- HOSPITAL NAME -->
+
+                <div class="field">
+
+                    <label for="hospitalName">Hospital name</label>
+
+                    <input
+                        id="hospitalName"
+                        name="hospital_name"
+                        type="text"
+                        placeholder="Your hospital name"
+                        autocomplete="organization"
+                        maxlength="255"
+                        required
+                    >
+
+                </div>
+
+                <!-- EMAIL -->
+
+                <div class="field">
+
+                    <label for="email">Email address</label>
+
+                    <input
+                        id="email"
+                        name="email"
+                        type="email"
+                        placeholder="you@example.com"
+                        autocomplete="email"
+                        maxlength="255"
+                        required
+                    >
+
+                </div>
+
+                <!-- PASSWORD -->
+
+                <div class="field">
+
+                    <label for="password">Password</label>
+
+                    <div class="password-wrap">
+
+                        <input
+                            id="password"
+                            name="password"
+                            type="password"
+                            placeholder="Create a password"
+                            autocomplete="new-password"
+                            minlength="8"
+                            maxlength="128"
+                            required
+                        >
+
+                        <button
+                            class="password-toggle"
+                            type="button"
+                            data-target="password"
+                            aria-label="Show password"
+                            aria-controls="password"
+                        >
+                            Show
+                        </button>
+
+                    </div>
+
+                    <div class="password-meter">
+                        <span id="meterBar"></span>
+                    </div>
+
+                    <small id="passwordHint" class="field-hint">
+                        Use at least 8 characters with letters and numbers.
+                    </small>
+
+                </div>
+
+                <!-- CONFIRM PASSWORD -->
+
+                <div class="field">
+
+                    <label for="confirmPassword">
+                        Confirm password
+                    </label>
+
+                    <div class="password-wrap">
+
+                        <input
+                            id="confirmPassword"
+                            name="confirm_password"
+                            type="password"
+                            placeholder="Repeat your password"
+                            autocomplete="new-password"
+                            minlength="8"
+                            maxlength="128"
+                            required
+                        >
+
+                        <button
+                            class="password-toggle"
+                            type="button"
+                            data-target="confirmPassword"
+                            aria-label="Show password"
+                            aria-controls="confirmPassword"
+                        >
+                            Show
+                        </button>
+
+                    </div>
+
+                    <small
+                        class="match-status"
+                        id="matchStatus"
+                        aria-live="polite"
+                    ></small>
+
+                </div>
+
+                <!-- TERMS -->
+
+                <label class="check terms">
+
+                    <input
+                        type="checkbox"
+                        id="terms"
+                        name="terms_accepted"
+                        value="on"
+                        required
+                    >
+
+                    <span>
+                        I agree to the platform terms and privacy policy.
+                    </span>
+
+                </label>
+
+                <!-- SUBMIT -->
+
+                <button class="submit-btn" type="submit">
+                    <span>Create account</span>
+                    <span class="submit-arrow">→</span>
+                </button>
+
+                <p
+                    class="form-status"
+                    id="formStatus"
+                    role="status"
+                    aria-live="polite"
+                >
+                    {% if request.query_params.get('message') %}
+                        {{ request.query_params.get('message') }}
+                    {% elif request.query_params.get('error') %}
+                        {{ request.query_params.get('error') }}
+                    {% endif %}
+                </p>
+
+            </form>
+
+            <!-- LOGIN LINK -->
+
+            <div class="auth-switch">
+                Already have an account?
+                <a href="/login">Sign in</a>
+            </div>
+
+        </section>
+
+    </main>
+
 </body>
 </html>
