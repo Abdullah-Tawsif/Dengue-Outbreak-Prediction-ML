@@ -30,7 +30,7 @@ async def home(request: Request):
 async def login(request: Request):
     return templates.TemplateResponse(
         request=request,
-        name="auth/login.html",
+        name="auth/login/login.html",
         context={}
     )
 
@@ -39,7 +39,7 @@ async def login(request: Request):
 async def register(request: Request):
     return templates.TemplateResponse(
         request=request,
-        name="auth/register.html",
+        name="auth/register/register.html",
         context={}
     )
 
