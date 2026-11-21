@@ -1,15 +1,34 @@
+"use strict";
 
-const form = document.getElementById("loginForm");
+document.addEventListener("DOMContentLoaded", () => {
 
-document.querySelectorAll(".eye-btn").forEach((button) => {
-    button.addEventListener("click", () => {
-        const input = document.getElementById(button.dataset.target);
+    const passwordButtons = document.querySelectorAll(".password-toggle");
 
-        input.type = input.type === "password" ? "text" : "password";
+    passwordButtons.forEach((button) => {
 
-        button.setAttribute(
-            "aria-label",
-            input.type === "password" ? "Show password" : "Hide password"
-        );
+        button.addEventListener("click", () => {
+
+            const targetId = button.dataset.target;
+            const input = document.getElementById(targetId);
+
+            if (!input) {
+                console.error("Password input not found:", targetId);
+                return;
+            }
+
+            const passwordIsHidden = input.type === "password";
+
+            input.type = passwordIsHidden ? "text" : "password";
+
+            button.textContent = passwordIsHidden ? "Hide" : "Show";
+
+            button.setAttribute(
+                "aria-label",
+                passwordIsHidden ? "Hide password" : "Show password"
+            );
+
+        });
+
     });
+
 });

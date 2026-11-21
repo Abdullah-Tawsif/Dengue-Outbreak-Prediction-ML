@@ -13,6 +13,7 @@ from src.backend.models import User
 
 def normalize_email(raw_email: str) -> str:
     """Validate and normalize an email address."""
+
     try:
         result = validate_email(
             raw_email.strip(),

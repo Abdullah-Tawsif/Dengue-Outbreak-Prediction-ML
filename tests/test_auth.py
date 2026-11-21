@@ -11,7 +11,11 @@ os.environ["SESSION_SECRET"] = (
     "unit-test-only-session-secret-at-least-32-characters"
 )
 
-from fastapi import FastAPI, Request
+from fastapi import Depends, FastAPI, Request
+from src.backend.dependencies import (
+    get_current_hospital_user,
+    get_current_admin_user,
+)
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -31,7 +35,6 @@ from src.backend.security import (
 TEST_SESSION_SECRET = (
     "unit-test-only-session-secret-at-least-32-characters"
 )
-
 
 @pytest.fixture
 def auth_context():
@@ -88,6 +91,25 @@ def auth_context():
             "user_id": request.session.get("user_id")
         }
 
+    # Test-only hospital-protected endpoint.
+    @app.get("/_test/hospital")
+    def test_hospital_access(
+        current_user: User = Depends(get_current_hospital_user),
+    ):
+        return {
+            "user_id": current_user.id,
+            "is_admin": current_user.is_admin,
+        }
+
+    # Test-only administrator-protected endpoint.
+    @app.get("/_test/admin")
+    def test_admin_access(
+        current_user: User = Depends(get_current_admin_user),
+    ):
+        return {
+            "user_id": current_user.id,
+            "is_admin": current_user.is_admin,
+        }
     try:
         with TestClient(app) as client:
             yield client, TestSessionLocal
@@ -461,3 +483,245 @@ def test_logout_clears_authenticated_session(auth_context):
     session_response = client.get("/_test/session")
 
     assert session_response.json()["user_id"] is None
+
+
+# --------------------------------------------------
+# ADDITIONAL STAGE 8 SECURITY AND ACCESS TESTS
+# --------------------------------------------------
+
+
+def test_registration_rejects_invalid_email(auth_context):
+    """Invalid email addresses must not create accounts."""
+
+    client, session_factory = auth_context
+    token = get_test_csrf(client)
+
+    response = client.post(
+        "/register",
+        data=registration_form(token, email="not-an-email"),
+        follow_redirects=False,
+    )
+
+    assert response.status_code == 303
+    assert get_redirect_error(response) == "Enter a valid email address."
+
+    with session_factory() as db:
+        assert db.query(User).count() == 0
+
+
+def test_public_registration_cannot_create_admin(auth_context):
+    """Extra admin fields must never grant public admin privileges."""
+
+    client, session_factory = auth_context
+    token = get_test_csrf(client)
+
+    data = registration_form(token)
+    data["is_admin"] = "true"
+
+    response = client.post(
+        "/register",
+        data=data,
+        follow_redirects=False,
+    )
+
+    assert response.status_code == 303
+
+    with session_factory() as db:
+        user = (
+            db.query(User)
+            .filter(User.email == "newhospital@example.com")
+            .one()
+        )
+
+        assert user.is_admin is False
+
+
+def test_login_rejects_invalid_csrf(auth_context):
+    """Login must reject an invalid CSRF token."""
+
+    client, session_factory = auth_context
+    create_test_user(session_factory)
+
+    response = client.post(
+        "/login",
+        data={
+            "email": "hospital@example.com",
+            "password": "StrongPassword123!",
+            "csrf_token": "invalid-token",
+        },
+        follow_redirects=False,
+    )
+
+    assert response.status_code == 403
+    assert client.get("/_test/session").json()["user_id"] is None
+
+
+def test_logout_rejects_invalid_csrf_and_keeps_session(auth_context):
+    """Invalid logout tokens must not terminate or change the session."""
+
+    client, session_factory = auth_context
+    user_id = create_test_user(session_factory)
+
+    token = get_test_csrf(client)
+
+    login_response = client.post(
+        "/login",
+        data={
+            "email": "hospital@example.com",
+            "password": "StrongPassword123!",
+            "csrf_token": token,
+        },
+        follow_redirects=False,
+    )
+
+    assert login_response.status_code == 303
+
+    response = client.post(
+        "/logout",
+        data={"csrf_token": "invalid-token"},
+        follow_redirects=False,
+    )
+
+    assert response.status_code == 403
+    assert client.get("/_test/session").json()["user_id"] == user_id
+
+
+def test_admin_login_redirects_to_admin_dashboard(auth_context):
+    """Administrators must be redirected to their own dashboard."""
+
+    client, session_factory = auth_context
+
+    user_id = create_test_user(
+        session_factory,
+        is_admin=True,
+    )
+
+    token = get_test_csrf(client)
+
+    response = client.post(
+        "/login",
+        data={
+            "email": "hospital@example.com",
+            "password": "StrongPassword123!",
+            "csrf_token": token,
+        },
+        follow_redirects=False,
+    )
+
+    assert response.status_code == 303
+    assert response.headers["location"] == "/admin_dashboard"
+
+    assert client.get("/_test/session").json()["user_id"] == user_id
+
+
+def test_unauthenticated_users_cannot_access_protected_routes(auth_context):
+    """Unauthenticated visitors must be redirected to login."""
+
+    client, _ = auth_context
+
+    for path in ["/_test/hospital", "/_test/admin"]:
+        response = client.get(
+            path,
+            follow_redirects=False,
+        )
+
+        assert response.status_code == 303
+        assert response.headers["location"] == "/login"
+
+
+def test_hospital_user_cannot_access_admin_route(auth_context):
+    """Hospital users must not access administrator-only resources."""
+
+    client, session_factory = auth_context
+    create_test_user(session_factory)
+
+    token = get_test_csrf(client)
+
+    login_response = client.post(
+        "/login",
+        data={
+            "email": "hospital@example.com",
+            "password": "StrongPassword123!",
+            "csrf_token": token,
+        },
+        follow_redirects=False,
+    )
+
+    assert login_response.status_code == 303
+
+    response = client.get(
+        "/_test/admin",
+        follow_redirects=False,
+    )
+
+    assert response.status_code == 303
+    assert response.headers["location"] == "/user_dashboard"
+
+
+def test_admin_cannot_access_hospital_only_route(auth_context):
+    """Administrators must be redirected away from hospital-only resources."""
+
+    client, session_factory = auth_context
+
+    create_test_user(
+        session_factory,
+        is_admin=True,
+    )
+
+    token = get_test_csrf(client)
+
+    login_response = client.post(
+        "/login",
+        data={
+            "email": "hospital@example.com",
+            "password": "StrongPassword123!",
+            "csrf_token": token,
+        },
+        follow_redirects=False,
+    )
+
+    assert login_response.status_code == 303
+
+    response = client.get(
+        "/_test/hospital",
+        follow_redirects=False,
+    )
+
+    assert response.status_code == 303
+    assert response.headers["location"] == "/admin_dashboard"
+
+
+def test_inactive_account_session_is_invalidated(auth_context):
+    """An account deactivated after login must lose protected access."""
+
+    client, session_factory = auth_context
+    user_id = create_test_user(session_factory)
+
+    token = get_test_csrf(client)
+
+    login_response = client.post(
+        "/login",
+        data={
+            "email": "hospital@example.com",
+            "password": "StrongPassword123!",
+            "csrf_token": token,
+        },
+        follow_redirects=False,
+    )
+
+    assert login_response.status_code == 303
+
+    with session_factory() as db:
+        user = db.get(User, user_id)
+        user.is_active = False
+        db.commit()
+
+    response = client.get(
+        "/_test/hospital",
+        follow_redirects=False,
+    )
+
+    assert response.status_code == 303
+    assert response.headers["location"] == "/login"
+
+    assert client.get("/_test/session").json()["user_id"] is None
