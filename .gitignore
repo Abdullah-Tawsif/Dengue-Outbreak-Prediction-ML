@@ -1,6 +1,3 @@
-# Exclude templates
-templates/
-
 # Secrets
 .env
 .env.*
