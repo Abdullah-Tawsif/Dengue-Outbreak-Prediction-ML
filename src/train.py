@@ -378,5 +378,25 @@ for horizon_name, weeks in TARGETS.items():
 
     print(f"Model saved: {model_path}")
 
+print("\n========== TARGET DIAGNOSTICS ==========")
 
-print("\nTraining completed successfully.")
+print("Target:", target_column)
+
+print("\nTarget statistics:")
+print(train_df[target_column].describe())
+
+print("\nTarget distribution:")
+print(train_df[target_column].value_counts().head(20))
+
+print("\nZero percentage:")
+print(
+    (train_df[target_column] == 0).mean() * 100,
+    "%"
+)
+
+print("\nFeature count:", len(FEATURE_COLUMNS))
+
+print("\nFeatures:")
+print(FEATURE_COLUMNS)
+
+print("========================================")

@@ -10,6 +10,7 @@
   >
 
   <title>AEDISIGHT — Ward Forecast Dashboard</title>
+  <meta name="csrf-token" content="{{ csrf_token }}">
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -17,8 +18,8 @@
     href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap"
     rel="stylesheet"
   >
-  <link rel="stylesheet" href="/static/css/user/user_dashboard.css?v=6">
-  <script src="/static/js/user/user.js?v=6" defer></script>
+  <link rel="stylesheet" href="/static/css/user/user_dashboard.css?v=7">
+  <script src="/static/js/user/user.js?v=7" defer></script>
 </head>
 
 <body class="dashboard-page">
@@ -114,14 +115,14 @@
         <div class="welcome-copy">
           <span class="status-pill">
             <span class="status-dot" aria-hidden="true"></span>
-            Model service not connected
+            Historical-data CatBoost model connected
           </span>
           <span class="panel-kicker">DENGUE EARLY WARNING</span>
-          <h2 id="welcome-title">Explore a ward-level dengue forecast.</h2>
+          <h2 id="welcome-title">Explore a ward forecast.</h2>
           <p>
-            Choose a city, ward, and 2- or 4-week period to prepare a dengue
-            forecast request. Results will appear once the model service is
-            connected.
+            Select a city, ward, forecast period and origin week. The CatBoost
+            model forecasts weekly cases 2 or 4 weeks ahead of that week and
+            assigns a ward-relative risk tier.
           </p>
         </div>
 
@@ -135,7 +136,7 @@
               <path d="M7 41h34"></path>
             </svg>
           </div>
-          <span>No live results</span>
+          <span>CatBoost forecast</span>
         </div>
       </section>
 
@@ -184,6 +185,14 @@
               </div>
             </div>
 
+            <div class="form-field origin-field">
+              <label for="asOfDate">Forecast origin week</label>
+              <input type="date" id="asOfDate" name="asOf"
+                     min="2016-03-28" max="2025-12-29" value="2025-08-04">
+              <small>Dengue peaks Jul–Sep. Pick a week in May–Sep to see peak-season risk;
+                2025-12-29 is the latest (dry-season) data.</small>
+            </div>
+
             <fieldset class="period-fieldset">
               <legend>Forecast period</legend>
               <div class="period-options">
@@ -199,20 +208,20 @@
             </fieldset>
 
             <button class="primary-btn" id="generateForecast" type="submit">
-              <span class="button-spinner" id="buttonSpinner" aria-hidden="true"></span>
+              <span class="button-spinner" id="buttonSpinner" aria-hidden="true" hidden></span>
               <span id="buttonLabel">Generate forecast</span>
               <span aria-hidden="true">→</span>
             </button>
 
             <p class="form-message" id="forecastMessage" role="status" aria-live="polite">
-              Select a city and ward to prepare your dengue forecast request.
+              Select a city and ward to prepare your forecast request.
             </p>
           </form>
 
           <div class="data-freshness">
             <span class="freshness-icon" aria-hidden="true">◷</span>
             <div>
-              <strong>Historical dengue data</strong>
+              <strong>Historical training dataset</strong>
               <span>Observations through 29 Dec 2025 · not live data</span>
             </div>
           </div>
@@ -242,8 +251,8 @@
                 <circle cx="37" cy="15" r="2"></circle>
               </svg>
             </div>
-            <h3>No dengue forecast generated yet</h3>
-            <p>Choose an area and period. Results appear only when the model service returns a prediction.</p>
+            <h3>No forecast generated yet</h3>
+            <p>Choose an area and period. No prediction is shown until a model response is available.</p>
           </div>
 
           <div class="result-state loading-state" id="forecastLoading" role="status" aria-live="polite" hidden>
@@ -272,10 +281,13 @@
               <article class="prediction-card">
                 <span>Risk category</span>
                 <strong id="riskCategory">—</strong>
-                <small>Provided by the model service</small>
+                <small id="riskDetail">Ward-relative percentile band</small>
               </article>
             </div>
             <p class="observation-date" id="observationDate"></p>
+            <p class="actual-note" id="actualNote" hidden></p>
+            <p class="season-note" id="seasonNote" hidden></p>
+            <p class="risk-warning" id="riskWarning"></p>
           </div>
         </article>
       </section>
@@ -284,13 +296,13 @@
         <article class="panel drivers-panel" aria-labelledby="drivers-title">
           <div class="panel-head">
             <div>
-              <span class="panel-kicker">03 · FORECAST DRIVERS</span>
-              <h2 id="drivers-title">Factors behind the forecast</h2>
+              <span class="panel-kicker">03 · WEATHER DRIVERS</span>
+              <h2 id="drivers-title">What influenced this forecast?</h2>
             </div>
           </div>
 
           <p class="detail-empty" id="driversEmpty">
-            Explanations for rainfall, temperature, humidity, and recent dengue cases will appear when provided by the model service.
+            Driver explanations will appear after a successful prediction.
           </p>
           <dl class="driver-list" id="driverList" hidden>
             <div>
@@ -306,7 +318,7 @@
               <dd id="humidityDriver">—</dd>
             </div>
             <div>
-              <dt>Recent reported dengue cases</dt>
+              <dt>Recent dengue cases</dt>
               <dd id="recentCasesDriver">—</dd>
             </div>
           </dl>
@@ -315,15 +327,15 @@
         <article class="panel chart-panel" aria-labelledby="chart-title">
           <div class="panel-head">
             <div>
-              <span class="panel-kicker">04 · DENGUE CASE HISTORY</span>
-              <h2 id="chart-title">Reported cases and forecast</h2>
+              <span class="panel-kicker">04 · CASE HISTORY</span>
+              <h2 id="chart-title">Historical cases vs forecast</h2>
             </div>
           </div>
 
           <div class="chart-empty" id="chartEmpty">
             <span class="chart-empty-icon" aria-hidden="true">⌁</span>
             <p>No forecast generated yet</p>
-            <small>Historical dengue counts and forecast values will appear here after a successful prediction.</small>
+            <small>Historical and forecast series will appear here after a successful prediction.</small>
           </div>
 
           <div class="chart-content" id="chartContent" hidden>
@@ -379,9 +391,9 @@
       </section>
 
       <footer class="dashboard-footer">
-        <span>AEDISIGHT · Dengue early-warning workspace</span>
+        <span>AEDISIGHT · Health intelligence</span>
         <span>
-          This interface does not currently provide live dengue predictions.
+          Forecasts use the historical training dataset (through 29 Dec 2025), not live data.
         </span>
       </footer>
     </div>

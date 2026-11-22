@@ -1,335 +1,161 @@
-"use strict";
+/* AEDISIGHT hospital dashboard: selectors, forecast request, result + chart rendering. */
+(function () {
+  "use strict";
 
-const sidebar = document.getElementById("sidebar");
-const menuButton = document.getElementById("mobileMenu");
-const backdrop = document.getElementById("sidebarBackdrop");
-const mobileViewport = window.matchMedia("(max-width: 900px)");
+  const $ = (id) => document.getElementById(id);
+  const NS = "http://www.w3.org/2000/svg";
 
-function setMenuOpen(isOpen, returnFocus = false) {
-    const shouldOpen = isOpen && mobileViewport.matches;
+  // ---------- mobile navigation ----------
+  const sidebar = $("sidebar"), backdrop = $("sidebarBackdrop"), menuBtn = $("mobileMenu");
+  function setNav(open) {
+    sidebar.classList.toggle("open", open);
+    backdrop.classList.toggle("is-visible", open);
+    document.body.classList.toggle("nav-open", open);
+    menuBtn.setAttribute("aria-expanded", String(open));
+    backdrop.tabIndex = open ? 0 : -1;
+  }
+  menuBtn.addEventListener("click", () => setNav(!sidebar.classList.contains("open")));
+  backdrop.addEventListener("click", () => setNav(false));
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") setNav(false); });
+  sidebar.querySelectorAll(".side-nav a").forEach((a) => a.addEventListener("click", () => setNav(false)));
 
-    sidebar.classList.toggle("open", shouldOpen);
-    backdrop.classList.toggle("is-visible", shouldOpen);
-    menuButton.setAttribute("aria-expanded", String(shouldOpen));
-    menuButton.setAttribute(
-        "aria-label",
-        shouldOpen ? "Close navigation menu" : "Open navigation menu"
-    );
-    document.body.classList.toggle("nav-open", shouldOpen);
-
-    if (shouldOpen) {
-        sidebar.querySelector("a")?.focus();
-    } else if (returnFocus) {
-        menuButton.focus();
+  // ---------- city -> ward ----------
+  const citySel = $("citySelect"), wardSel = $("wardSelect");
+  citySel.addEventListener("change", () => {
+    const opt = citySel.selectedOptions[0];
+    wardSel.innerHTML = "";
+    if (!opt || !opt.value) {
+      wardSel.disabled = true;
+      wardSel.add(new Option("Select a city first", ""));
+      return;
     }
-}
-
-menuButton.addEventListener("click", () => {
-    setMenuOpen(menuButton.getAttribute("aria-expanded") !== "true");
-});
-backdrop.addEventListener("click", () => setMenuOpen(false));
-
-sidebar.querySelectorAll("nav a").forEach((link) => {
-    link.addEventListener("click", () => {
-        sidebar.querySelectorAll("nav a").forEach((item) => {
-            item.classList.remove("active");
-            item.removeAttribute("aria-current");
-        });
-
-        link.classList.add("active");
-        link.setAttribute("aria-current", "location");
-        setMenuOpen(false);
-    });
-});
-
-document.addEventListener("keydown", (event) => {
-    if (event.key === "Escape" && menuButton.getAttribute("aria-expanded") === "true") {
-        setMenuOpen(false, true);
+    const prefix = opt.dataset.wardPrefix, count = Number(opt.dataset.wardCount);
+    wardSel.add(new Option("Select a ward", ""));
+    for (let i = 1; i <= count; i++) {
+      const n = String(i).padStart(2, "0");
+      wardSel.add(new Option(`Ward ${n}`, `${prefix}_Ward_${n}`)); // value = ward_id used by the model
     }
-});
+    wardSel.disabled = false;
+    setMessage("Now choose a ward.");
+  });
 
-mobileViewport.addEventListener("change", (event) => {
-    if (!event.matches) {
-        setMenuOpen(false);
-    }
-});
+  // ---------- helpers ----------
+  const form = $("forecastForm"), btn = $("generateForecast");
+  const panels = { empty: $("forecastEmpty"), loading: $("forecastLoading"), error: $("forecastError"), success: $("forecastSuccess") };
+  function show(name) { Object.entries(panels).forEach(([k, el]) => { el.hidden = k !== name; }); }
+  function setMessage(t) { $("forecastMessage").textContent = t; }
+  function setBusy(busy) {
+    btn.disabled = busy;
+    $("buttonSpinner").hidden = !busy;
+    $("buttonLabel").textContent = busy ? "Generating…" : "Generate forecast";
+    document.getElementById("forecast-results").setAttribute("aria-busy", String(busy));
+  }
+  const fmtDate = (iso) => new Date(iso + "T00:00:00").toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+  const csrf = () => (document.querySelector('meta[name="csrf-token"]') || {}).content || "";
 
-const forecastForm = document.getElementById("forecastForm");
-const citySelect = document.getElementById("citySelect");
-const wardSelect = document.getElementById("wardSelect");
-const generateButton = document.getElementById("generateForecast");
-const buttonLabel = document.getElementById("buttonLabel");
-const buttonSpinner = document.getElementById("buttonSpinner");
-const forecastResults = document.getElementById("forecast-results");
-const forecastMessage = document.getElementById("forecastMessage");
-const resultBadge = document.getElementById("resultBadge");
-const forecastEmpty = document.getElementById("forecastEmpty");
-const forecastLoading = document.getElementById("forecastLoading");
-const forecastError = document.getElementById("forecastError");
-const forecastErrorMessage = document.getElementById("forecastErrorMessage");
-const forecastSuccess = document.getElementById("forecastSuccess");
-const driversEmpty = document.getElementById("driversEmpty");
-const driverList = document.getElementById("driverList");
-const chartEmpty = document.getElementById("chartEmpty");
-const chartContent = document.getElementById("chartContent");
+  // ---------- submit ----------
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const city = citySel.value, ward = wardSel.value;
+    const horizon = Number(form.querySelector('input[name="horizon"]:checked').value);
+    const asOf = $("asOfDate").value || null;
+    if (!city || !ward) { setMessage("Please select both a city and a ward."); return; }
 
-function populateWards() {
-    const cityOption = citySelect.selectedOptions[0];
-    const wardPrefix = cityOption.dataset.wardPrefix;
-    const wardCount = Number(cityOption.dataset.wardCount || 0);
-
-    wardSelect.replaceChildren(new Option(
-        wardCount ? "Select a ward" : "Select a city first",
-        ""
-    ));
-    wardSelect.disabled = !wardCount;
-
-    for (let wardNumber = 1; wardNumber <= wardCount; wardNumber += 1) {
-        const suffix = String(wardNumber).padStart(2, "0");
-        wardSelect.add(new Option(
-            `Ward ${suffix}`,
-            `${wardPrefix}_Ward_${suffix}`
-        ));
-    }
-}
-
-function setForecastState(state, message = "") {
-    const isLoading = state === "loading";
-    const horizonInputs = forecastForm.querySelectorAll('input[name="horizon"]');
-
-    forecastResults.setAttribute("aria-busy", String(isLoading));
-    forecastEmpty.hidden = state !== "empty";
-    forecastLoading.hidden = !isLoading;
-    forecastError.hidden = state !== "error";
-    forecastSuccess.hidden = state !== "success";
-    driversEmpty.hidden = state === "success";
-    driverList.hidden = state !== "success";
-    chartEmpty.hidden = state === "success";
-    chartContent.hidden = state !== "success";
-    generateButton.disabled = isLoading;
-    citySelect.disabled = isLoading;
-    wardSelect.disabled = isLoading || !citySelect.value;
-    horizonInputs.forEach((input) => {
-        input.disabled = isLoading;
-    });
-    buttonSpinner.hidden = !isLoading;
-    buttonLabel.textContent = isLoading ? "Preparing forecast" : "Generate forecast";
-
-    if (state === "loading") {
-        resultBadge.textContent = "Preparing";
-        forecastMessage.textContent = "Preparing your selected forecast.";
-    } else if (state === "error") {
-        resultBadge.textContent = "Unavailable";
-        forecastMessage.textContent = "No prediction was generated.";
-        forecastErrorMessage.textContent = message;
-    } else if (state === "success") {
-        resultBadge.textContent = "Forecast ready";
-        forecastMessage.textContent = "Forecast results are ready.";
-    } else {
-        resultBadge.textContent = "Awaiting forecast";
-        forecastMessage.textContent = "Select a city and ward to prepare your forecast request.";
-        forecastErrorMessage.textContent = "";
-    }
-}
-
-function clearForecast() {
-    setForecastState("empty");
-}
-
-citySelect.addEventListener("change", () => {
-    populateWards();
-    clearForecast();
-});
-
-wardSelect.addEventListener("change", clearForecast);
-forecastForm.querySelectorAll('input[name="horizon"]').forEach((input) => {
-    input.addEventListener("change", clearForecast);
-});
-
-function formatDate(value) {
-    if (typeof value !== "string" || Number.isNaN(Date.parse(value))) {
-        throw new Error("The forecast service returned an invalid observation date.");
-    }
-
-    return new Intl.DateTimeFormat("en-GB", {
-        day: "numeric",
-        month: "short",
-        year: "numeric",
-        timeZone: "UTC",
-    }).format(new Date(value));
-}
-
-function validateSeries(series, name, minimumLength) {
-    if (
-        !Array.isArray(series)
-        || series.length < minimumLength
-        || series.some((point) => (
-            !point
-            || typeof point.date !== "string"
-            || Number.isNaN(Date.parse(point.date))
-            || !Number.isFinite(point.cases)
-            || point.cases < 0
-        ))
-    ) {
-        throw new Error(`The forecast service returned invalid ${name} data.`);
-    }
-
-    return series;
-}
-
-function drawForecastChart(history, forecast, selection) {
-    const svgNamespace = "http://www.w3.org/2000/svg";
-    const chartGrid = document.getElementById("chartGrid");
-    const chartYAxis = document.getElementById("chartYAxis");
-    const historyLine = document.getElementById("historyLine");
-    const forecastLine = document.getElementById("forecastLine");
-    const divider = document.getElementById("forecastDivider");
-    const chartDescription = document.getElementById("chartSvgDescription");
-    const chartTitle = document.getElementById("chartSvgTitle");
-    const allValues = [...history, ...forecast].map((point) => point.cases);
-    const maxCases = Math.max(1, ...allValues);
-    const plot = { left: 58, right: 736, top: 20, bottom: 236 };
-    const totalPoints = history.length + forecast.length;
-
-    chartGrid.replaceChildren();
-    chartYAxis.replaceChildren();
-
-    for (let line = 0; line < 5; line += 1) {
-        const y = plot.top + ((plot.bottom - plot.top) * line) / 4;
-        const gridLine = document.createElementNS(svgNamespace, "line");
-        gridLine.setAttribute("x1", String(plot.left));
-        gridLine.setAttribute("x2", String(plot.right));
-        gridLine.setAttribute("y1", String(y));
-        gridLine.setAttribute("y2", String(y));
-        chartGrid.append(gridLine);
-
-        const axisLabel = document.createElementNS(svgNamespace, "text");
-        axisLabel.setAttribute("x", String(plot.left - 10));
-        axisLabel.setAttribute("y", String(y + 4));
-        axisLabel.setAttribute("text-anchor", "end");
-        axisLabel.textContent = new Intl.NumberFormat(undefined, {
-            maximumFractionDigits: 1,
-        }).format(maxCases * (4 - line) / 4);
-        chartYAxis.append(axisLabel);
-    }
-
-    function pointCoordinates(point, index) {
-        const x = plot.left + ((plot.right - plot.left) * index) / (totalPoints - 1);
-        const y = plot.bottom - ((plot.bottom - plot.top) * point.cases) / maxCases;
-        return `${x},${y}`;
-    }
-
-    historyLine.setAttribute(
-        "points",
-        history.map(pointCoordinates).join(" ")
-    );
-    forecastLine.setAttribute(
-        "points",
-        [history[history.length - 1], ...forecast]
-            .map((point, index) => pointCoordinates(
-                point,
-                history.length - 1 + index
-            ))
-            .join(" ")
-    );
-
-    const dividerX = plot.left
-        + ((plot.right - plot.left) * (history.length - 1)) / (totalPoints - 1);
-    divider.setAttribute("x1", String(dividerX));
-    divider.setAttribute("x2", String(dividerX));
-    divider.setAttribute("y1", String(plot.top));
-    divider.setAttribute("y2", String(plot.bottom));
-
-    chartTitle.textContent = `${selection.city} ${wardSelect.selectedOptions[0].textContent}: historical cases and forecast`;
-    chartDescription.textContent = `Observed dengue cases through ${formatDate(history.at(-1).date)}, followed by the ${selection.horizonWeeks}-week forecast.`;
-    document.getElementById("chartStartDate").textContent = formatDate(history[0].date);
-    document.getElementById("chartObservedDate").textContent = formatDate(history.at(-1).date);
-    document.getElementById("chartForecastDate").textContent = formatDate(forecast.at(-1).date);
-}
-
-/*
-Expected forecast-service response:
-predictedCases, riskCategory, observationDate, drivers (rainfall, temperature,
-humidity, recentCases), history, and forecast date/cases series.
-*/
-function renderForecastResult(result, selection) {
-    if (
-        !result
-        || !Number.isFinite(result.predictedCases)
-        || result.predictedCases < 0
-        || typeof result.riskCategory !== "string"
-        || !result.riskCategory.trim()
-        || !result.drivers
-    ) {
-        throw new Error("The forecast service returned an incomplete result.");
-    }
-
-    const history = validateSeries(result.history, "historical case", 2);
-    const forecast = validateSeries(result.forecast, "forecast", 1);
-    const drivers = [
-        ["rainfallDriver", result.drivers.rainfall],
-        ["temperatureDriver", result.drivers.temperature],
-        ["humidityDriver", result.drivers.humidity],
-        ["recentCasesDriver", result.drivers.recentCases],
-    ];
-
-    if (drivers.some(([, value]) => typeof value !== "string" || !value.trim())) {
-        throw new Error("The forecast service returned incomplete driver explanations.");
-    }
-
-    document.getElementById("predictedCases").textContent =
-        new Intl.NumberFormat(undefined, { maximumFractionDigits: 1 })
-            .format(result.predictedCases);
-    document.getElementById("riskCategory").textContent = result.riskCategory;
-    document.getElementById("predictionPeriod").textContent =
-        `${selection.horizonWeeks}-week forecast`;
-    document.getElementById("observationDate").textContent =
-        `Based on observations through ${formatDate(result.observationDate)}.`;
-
-    drivers.forEach(([elementId, value]) => {
-        document.getElementById(elementId).textContent = value;
-    });
-
-    drawForecastChart(history, forecast, selection);
-    setForecastState("success");
-}
-
-async function requestForecast(selection) {
-    const service = window.aedisightForecastService;
-
-    if (!service || typeof service.generate !== "function") {
-        throw new Error(
-            "The model API is not connected yet. No prediction was generated."
-        );
-    }
-
-    return service.generate(selection);
-}
-
-forecastForm.addEventListener("submit", async (event) => {
-    event.preventDefault();
-
-    if (!forecastForm.reportValidity()) {
-        return;
-    }
-
-    const selection = {
-        city: citySelect.value,
-        ward: wardSelect.value,
-        horizonWeeks: Number(
-            forecastForm.querySelector('input[name="horizon"]:checked').value
-        ),
-    };
-
-    setForecastState("loading");
-
+    setBusy(true); show("loading"); $("resultBadge").textContent = "Running…";
     try {
-        const result = await requestForecast(selection);
-        renderForecastResult(result, selection);
-    } catch (error) {
-        const message = error instanceof Error
-            ? error.message
-            : "The forecast could not be generated. No prediction was returned.";
-        setForecastState("error", message);
+      const res = await fetch("/api/predict", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json", "X-CSRF-Token": csrf() },
+        body: JSON.stringify({ city, ward, horizonWeeks: horizon, asOf }),
+      });
+      let data = {};
+      try { data = await res.json(); } catch (_) { /* non-JSON error */ }
+      if (!res.ok) {
+        const d = data.detail;
+        throw new Error(typeof d === "string" ? d : "Request failed (" + res.status + "). Please try again.");
+      }
+      render(data);
+      setMessage("Forecast ready.");
+    } catch (err) {
+      $("forecastErrorMessage").textContent = err.message || "Forecast unavailable.";
+      show("error"); $("resultBadge").textContent = "Unavailable";
+      setMessage("Forecast could not be generated.");
+    } finally { setBusy(false); }
+  });
+
+  // ---------- render ----------
+  function render(d) {
+    show("success");
+    $("resultBadge").textContent = `${d.horizonWeeks}-week forecast`;
+    $("predictedCases").textContent = Number(d.predictedCases).toFixed(1);
+    $("predictionPeriod").textContent = `Expected weekly cases · week of ${fmtDate(d.targetDate)}`;
+    const rc = $("riskCategory"); rc.textContent = d.riskCategory; rc.dataset.risk = d.riskCategory;
+    const t = d.riskThresholds || {};
+    $("riskDetail").textContent = `Low ≤ ${t.low_max?.toFixed(0)} · Medium ≤ ${t.medium_max?.toFixed(0)} · High ≤ ${t.high_max?.toFixed(0)} cases/wk`;
+    $("observationDate").textContent = `Forecast origin: ${fmtDate(d.observationDate)} · dataset ends ${fmtDate(d.dataThrough)} · ${d.model}`;
+
+    const an = $("actualNote");
+    if (d.actualCases !== null && d.actualCases !== undefined) {
+      an.hidden = false;
+      an.textContent = `Backtest: ${d.actualCases} cases were actually recorded that week (forecast ${Number(d.predictedCases).toFixed(1)}).`;
+    } else an.hidden = true;
+    const sn = $("seasonNote");
+    sn.hidden = !d.seasonNote; sn.textContent = d.seasonNote || "";
+    $("riskWarning").textContent = d.riskWarning || "";
+
+    $("driversEmpty").hidden = true; $("driverList").hidden = false;
+    $("rainfallDriver").textContent = d.drivers.rainfall;
+    $("temperatureDriver").textContent = d.drivers.temperature;
+    $("humidityDriver").textContent = d.drivers.humidity;
+    $("recentCasesDriver").textContent = d.drivers.recentCases;
+
+    drawChart(d);
+  }
+
+  // ---------- chart ----------
+  function drawChart(d) {
+    const W = 760, H = 280, L = 44, R = 20, T = 16, B = 24;
+    const hist = d.history.map((p) => ({ t: +new Date(p.date), v: p.cases }));
+    const fc = d.forecast[0];
+    const fcPt = { t: +new Date(fc.date), v: fc.cases };
+    const last = hist[hist.length - 1];
+    const hasActual = d.actualCases !== null && d.actualCases !== undefined;
+    const maxV = Math.max(1, ...hist.map((p) => p.v), fcPt.v, hasActual ? d.actualCases : 0) * 1.15;
+    const t0 = hist[0].t, t1 = fcPt.t;
+    const x = (t) => L + ((t - t0) / (t1 - t0)) * (W - L - R);
+    const y = (v) => H - B - (v / maxV) * (H - T - B);
+
+    const grid = $("chartGrid"), axis = $("chartYAxis");
+    grid.innerHTML = ""; axis.innerHTML = "";
+    for (let i = 0; i <= 4; i++) {
+      const v = (maxV / 4) * i, yy = y(v);
+      const ln = document.createElementNS(NS, "line");
+      ln.setAttribute("x1", L); ln.setAttribute("x2", W - R); ln.setAttribute("y1", yy); ln.setAttribute("y2", yy);
+      grid.appendChild(ln);
+      const tx = document.createElementNS(NS, "text");
+      tx.setAttribute("x", L - 8); tx.setAttribute("y", yy + 4); tx.setAttribute("text-anchor", "end");
+      tx.textContent = v.toFixed(v >= 10 ? 0 : 1);
+      axis.appendChild(tx);
     }
-});
+    $("historyLine").setAttribute("points", hist.map((p) => `${x(p.t).toFixed(1)},${y(p.v).toFixed(1)}`).join(" "));
+    $("forecastLine").setAttribute("points", `${x(last.t).toFixed(1)},${y(last.v).toFixed(1)} ${x(fcPt.t).toFixed(1)},${y(fcPt.v).toFixed(1)}`);
+    const div = $("forecastDivider");
+    div.setAttribute("x1", x(last.t)); div.setAttribute("x2", x(last.t)); div.setAttribute("y1", T); div.setAttribute("y2", H - B);
+
+    const old = document.getElementById("actualDot"); if (old) old.remove();
+    if (hasActual) {
+      const c = document.createElementNS(NS, "circle");
+      c.id = "actualDot"; c.setAttribute("class", "actual-dot"); c.setAttribute("r", 5);
+      c.setAttribute("cx", x(fcPt.t)); c.setAttribute("cy", y(d.actualCases));
+      $("forecastChart").appendChild(c);
+    }
+    $("chartSvgDescription").textContent =
+      `Last 12 weekly case counts up to ${d.observationDate}, then a forecast of ${fc.cases} cases for ${fc.date}` +
+      (hasActual ? `; actual recorded cases were ${d.actualCases}.` : ".");
+    $("chartStartDate").textContent = fmtDate(d.history[0].date);
+    $("chartObservedDate").textContent = "Origin " + fmtDate(d.observationDate);
+    $("chartForecastDate").textContent = "Forecast " + fmtDate(fc.date);
+    $("chartEmpty").hidden = true; $("chartContent").hidden = false;
+  }
+})();
