@@ -3,271 +3,380 @@ import joblib
 import numpy as np
 import pandas as pd
 
-from sklearn.compose import ColumnTransformer
-from sklearn.ensemble import (
-    RandomForestRegressor,
-    HistGradientBoostingRegressor
-)
-from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
-from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import OneHotEncoder
-from sklearn.base import clone
+from catboost import CatBoostRegressor
 
 
-# 1. LOAD DATA
+# =========================
+# CONFIGURATION
+# =========================
 
 DATA_PATH = "data/processed/dengue_dataset.csv"
+MODEL_DIR = "models"
 
-df = pd.read_csv(DATA_PATH)
+RANDOM_STATE = 42
 
-df["date"] = pd.to_datetime(df["date"])
+TARGETS = {
+    "2w": 2,
+    "3w": 3,
+    "4w": 4
+}
 
-df = df.sort_values(["ward_id", "date"]).reset_index(drop=True)
-
-print("Original rows:", len(df))
-print("Unique wards:", df["ward_id"].nunique())
-print("Cities:", df["city"].unique())
-
-
-# 2. DEFINE FEATURES
-
-categorical_features = [
+RAW_COLUMNS = [
+    "date",
     "city",
-    "ward_id"
-]
-
-numerical_features = [
+    "ward_id",
     "population_density_sqkm",
     "water_logging_risk_index",
     "sanitation_score",
-
     "avg_temp_C",
     "max_temp_c",
     "min_temp_c",
     "rainfall_mm",
     "relative_humidity_pct",
-    "dengue_cases",
-
-    "rain_lag_1w",
-    "rain_lag_2w",
-    "rain_lag_3w",
-    "rain_lag_4w",
-    "rain_sum_2w",
-    "rain_sum_4w",
-
-    "dengue_cases_lag_1w",
-    "dengue_cases_lag_2w",
-    "dengue_cases_lag_3w",
-    "dengue_cases_lag_4w",
-
-    "avg_temp_C_lag_1w",
-    "avg_temp_C_lag_2w",
-    "avg_temp_C_lag_3w",
-    "avg_temp_C_lag_4w",
-
-    "relative_humidity_pct_lag_1w",
-    "relative_humidity_pct_lag_2w",
-    "relative_humidity_pct_lag_3w",
-    "relative_humidity_pct_lag_4w",
-
-    "avg_temp_C_mean_prev_4w",
-    "relative_humidity_pct_mean_prev_4w",
-
-    "calendar_week",
-    "calendar_month"
+    "dengue_cases"
 ]
 
-feature_columns = categorical_features + numerical_features
 
-required_columns = feature_columns + ["date", "dengue_cases"]
+# =========================
+# CREATE DIRECTORIES
+# =========================
 
-missing_columns = [
-    col for col in required_columns
-    if col not in df.columns
-]
-
-if missing_columns:
-    raise ValueError(f"Missing columns: {missing_columns}")
+os.makedirs(MODEL_DIR, exist_ok=True)
 
 
-# 3. CREATE FUTURE TARGETS
+# =========================
+# LOAD DATA
+# =========================
 
-grouped = df.groupby("ward_id", sort=False)
+print("Loading data...")
 
-df["target_2w"] = grouped["dengue_cases"].shift(-2)
-df["target_4w"] = grouped["dengue_cases"].shift(-4)
+df = pd.read_csv(DATA_PATH)
 
-# Record the actual date of each future target.
-df["target_date_2w"] = grouped["date"].shift(-2)
-df["target_date_4w"] = grouped["date"].shift(-4)
+print(f"Original rows: {len(df)}")
 
 
-# 4. PREPARE MODELS
+# =========================
+# KEEP ONLY RAW COLUMNS
+# =========================
 
-preprocessor = ColumnTransformer(
-    transformers=[
-        (
-            "categories",
-            OneHotEncoder(
-                handle_unknown="ignore",
-                sparse_output=False
-            ),
-            categorical_features
+df = df[RAW_COLUMNS].copy()
+
+df["date"] = pd.to_datetime(df["date"])
+
+df = df.sort_values(
+    ["ward_id", "date"]
+).reset_index(drop=True)
+
+
+# =========================
+# RAW DATA CHECK
+# =========================
+
+missing = df[RAW_COLUMNS].isna().sum()
+
+if missing.sum() > 0:
+    print("\nMissing values found in raw data:")
+    print(missing[missing > 0])
+
+    raise ValueError(
+        "Raw dataset contains missing values. "
+        "Fix the raw data before training."
+    )
+
+print("Raw data check passed.")
+
+
+# =========================
+# FEATURE ENGINEERING
+# =========================
+
+print("Creating features...")
+
+grouped = df.groupby("ward_id", group_keys=False)
+
+
+# ----- Lag features -----
+
+for lag in range(1, 5):
+
+    df[f"rainfall_lag_{lag}w"] = (
+        grouped["rainfall_mm"].shift(lag)
+    )
+
+    df[f"avg_temp_lag_{lag}w"] = (
+        grouped["avg_temp_C"].shift(lag)
+    )
+
+    df[f"humidity_lag_{lag}w"] = (
+        grouped["relative_humidity_pct"].shift(lag)
+    )
+
+    df[f"dengue_cases_lag_{lag}w"] = (
+        grouped["dengue_cases"].shift(lag)
+    )
+
+
+# ----- Rolling rainfall features -----
+
+for window in [2, 4, 8]:
+
+    df[f"rainfall_mean_prev_{window}w"] = (
+        grouped["rainfall_mm"]
+        .transform(
+            lambda x: x.shift(1).rolling(window).mean()
         )
-    ],
-    remainder="passthrough"
+    )
+
+    df[f"rainfall_sum_prev_{window}w"] = (
+        grouped["rainfall_mm"]
+        .transform(
+            lambda x: x.shift(1).rolling(window).sum()
+        )
+    )
+
+
+# ----- Rolling temperature features -----
+
+for window in [2, 4, 8]:
+
+    df[f"avg_temp_mean_prev_{window}w"] = (
+        grouped["avg_temp_C"]
+        .transform(
+            lambda x: x.shift(1).rolling(window).mean()
+        )
+    )
+
+
+# ----- Rolling humidity features -----
+
+for window in [2, 4, 8]:
+
+    df[f"humidity_mean_prev_{window}w"] = (
+        grouped["relative_humidity_pct"]
+        .transform(
+            lambda x: x.shift(1).rolling(window).mean()
+        )
+    )
+
+
+# ----- Rolling dengue features -----
+
+for window in [2, 4, 8]:
+
+    df[f"dengue_mean_prev_{window}w"] = (
+        grouped["dengue_cases"]
+        .transform(
+            lambda x: x.shift(1).rolling(window).mean()
+        )
+    )
+
+
+# ----- Dengue trend features -----
+
+df["dengue_change_1w"] = (
+    df["dengue_cases"]
+    - df["dengue_cases_lag_1w"]
 )
 
-models = {
-    "Random Forest": RandomForestRegressor(
-        n_estimators=300,
-        max_depth=18,
-        min_samples_leaf=2,
-        random_state=42,
-        n_jobs=-1
-    ),
+df["dengue_change_2w"] = (
+    df["dengue_cases_lag_1w"]
+    - df["dengue_cases_lag_2w"]
+)
 
-    "Gradient Boosting": HistGradientBoostingRegressor(
-        loss="poisson",
-        max_iter=200,
-        learning_rate=0.08,
-        max_leaf_nodes=31,
-        l2_regularization=1.0,
-        random_state=42
+df["dengue_change_4w"] = (
+    df["dengue_cases_lag_1w"]
+    - df["dengue_cases_lag_4w"]
+)
+
+
+# ----- Dengue growth features -----
+
+df["dengue_growth_ratio_1w"] = (
+    df["dengue_cases"]
+    / (df["dengue_cases_lag_1w"] + 1)
+)
+
+df["dengue_growth_ratio_2w"] = (
+    df["dengue_cases"]
+    / (df["dengue_cases_lag_2w"] + 1)
+)
+
+
+# ----- Calendar features -----
+
+df["calendar_week"] = df["date"].dt.isocalendar().week.astype(int)
+
+df["calendar_month"] = df["date"].dt.month
+
+
+# ----- Cyclical calendar features -----
+
+df["week_sin"] = np.sin(
+    2 * np.pi * df["calendar_week"] / 52
+)
+
+df["week_cos"] = np.cos(
+    2 * np.pi * df["calendar_week"] / 52
+)
+
+df["month_sin"] = np.sin(
+    2 * np.pi * df["calendar_month"] / 12
+)
+
+df["month_cos"] = np.cos(
+    2 * np.pi * df["calendar_month"] / 12
+)
+
+
+# =========================
+# CREATE FUTURE TARGETS
+# =========================
+
+for name, weeks in TARGETS.items():
+
+    df[f"target_{name}"] = (
+        grouped["dengue_cases"].shift(-weeks)
     )
+
+    df[f"target_date_{name}"] = (
+        grouped["date"].shift(-weeks)
+    )
+
+
+# =========================
+# DEFINE FEATURES
+# =========================
+
+DROP_COLUMNS = [
+    "date",
+    "dengue_cases",
+
+    "target_2w",
+    "target_3w",
+    "target_4w",
+
+    "target_date_2w",
+    "target_date_3w",
+    "target_date_4w"
+]
+
+FEATURE_COLUMNS = [
+    column
+    for column in df.columns
+    if column not in DROP_COLUMNS
+]
+
+CATEGORICAL_FEATURES = [
+    "city",
+    "ward_id"
+]
+
+CATEGORICAL_INDICES = [
+    FEATURE_COLUMNS.index(column)
+    for column in CATEGORICAL_FEATURES
+]
+
+
+# =========================
+# CATBOOST CONFIGURATION
+# =========================
+
+catboost_params = {
+    "loss_function": "RMSE",
+    "iterations": 700,
+    "learning_rate": 0.05,
+    "depth": 7,
+    "l2_leaf_reg": 3,
+    "random_seed": RANDOM_STATE,
+    "verbose": 100,
+    "allow_writing_files": False
 }
 
 
-# 5. TRAIN AND EVALUATE
+# =========================
+# TRAIN MODELS
+# =========================
 
-os.makedirs("models", exist_ok=True)
+for horizon_name, weeks in TARGETS.items():
 
-for horizon in [2, 4]:
+    print(f"\nTraining CatBoost for {weeks}-week forecast...")
 
-    print("\n" + "=" * 45)
-    print(f"FORECAST: {horizon} WEEKS")
-    print("=" * 45)
+    target_column = f"target_{horizon_name}"
+    target_date_column = f"target_date_{horizon_name}"
 
-    target = f"target_{horizon}w"
-    target_date = f"target_date_{horizon}w"
-
-    # Remove rows with incomplete input features or targets.
-    clean_df = df.dropna(
-        subset=feature_columns + [target, target_date]
+    # Remove rows where future target does not exist
+    model_df = df.dropna(
+        subset=[target_column]
     ).copy()
 
-    # Chronological split based on the date being predicted.
-    train_data = clean_df[
-        clean_df[target_date] < "2024-01-01"
-    ]
+    # Remove rows where engineered features are unavailable
+    model_df = model_df.dropna(
+        subset=FEATURE_COLUMNS
+    ).copy()
 
-    validation_data = clean_df[
-        (clean_df[target_date] >= "2024-01-01") &
-        (clean_df[target_date] < "2025-01-01")
-    ]
-
-    test_data = clean_df[
-        (clean_df[target_date] >= "2025-01-01") &
-        (clean_df[target_date] < "2026-01-01")
-    ]
-
-    print("Usable rows:", len(clean_df))
-    print("Training rows:", len(train_data))
-    print("Validation rows:", len(validation_data))
-    print("Testing rows:", len(test_data))
-
-    if min(len(train_data), len(validation_data), len(test_data)) == 0:
-        raise ValueError("One of the chronological data splits is empty.")
-
-    X_train = train_data[feature_columns]
-    y_train = train_data[target]
-
-    X_val = validation_data[feature_columns]
-    y_val = validation_data[target]
-
-    X_test = test_data[feature_columns]
-    y_test = test_data[target]
-
-    # Historical baseline: predict future cases equal to
-    # the latest currently observed dengue cases.
-    baseline_predictions = np.maximum(
-        validation_data["dengue_cases"].to_numpy(), 0
+    # Target date
+    model_df[target_date_column] = pd.to_datetime(
+        model_df[target_date_column]
     )
 
-    print("\nHistorical baseline validation MAE:",
-          round(mean_absolute_error(y_val, baseline_predictions), 3))
+    # Chronological training data
+    train_df = model_df[
+        model_df[target_date_column].dt.year <= 2024
+    ].copy()
 
-    best_model_name = None
-    best_mae = float("inf")
+    test_df = model_df[
+        model_df[target_date_column].dt.year == 2025
+    ].copy()
 
-    # Compare candidate models on validation data.
-    for name, estimator in models.items():
+    print(f"Usable rows: {len(model_df)}")
+    print(f"Training rows: {len(train_df)}")
+    print(f"2025 test rows: {len(test_df)}")
 
-        pipeline = Pipeline([
-            ("preprocessor", clone(preprocessor)),
-            ("model", clone(estimator))
-        ])
+    if len(train_df) == 0:
+        raise ValueError(
+            f"No training data available for {horizon_name}."
+        )
 
-        pipeline.fit(X_train, y_train)
+    # Features
+    X_train = train_df[FEATURE_COLUMNS].copy()
+    y_train = train_df[target_column].copy()
 
-        predictions = np.maximum(pipeline.predict(X_val), 0)
+    # CatBoost categorical columns
+    for column in CATEGORICAL_FEATURES:
+        X_train[column] = X_train[column].astype(str)
 
-        mae = mean_absolute_error(y_val, predictions)
-        rmse = np.sqrt(mean_squared_error(y_val, predictions))
+    # Target
+    y_train = y_train.astype(float)
 
-        print(f"\n{name}")
-        print("Validation MAE:", round(mae, 3))
-        print("Validation RMSE:", round(rmse, 3))
-
-        if mae < best_mae:
-            best_mae = mae
-            best_model_name = name
-
-    print("\nSelected model:", best_model_name)
-
-    # Retrain selected model using training + validation data.
-    final_train = pd.concat(
-        [train_data, validation_data]
+    # Create model
+    model = CatBoostRegressor(
+        **catboost_params
     )
 
-    final_model = Pipeline([
-        ("preprocessor", preprocessor),
-        ("model", models[best_model_name])
-    ])
-
-    final_model.fit(
-        final_train[feature_columns],
-        final_train[target]
+    # Train
+    model.fit(
+        X_train,
+        y_train,
+        cat_features=CATEGORICAL_INDICES
     )
 
-    # Evaluate once on the untouched test period.
-    test_predictions = np.maximum(
-        final_model.predict(X_test), 0
+    # Save model
+    model_path = os.path.join(
+        MODEL_DIR,
+        f"catboost_model_{horizon_name}.joblib"
     )
 
-    mae = mean_absolute_error(y_test, test_predictions)
-    rmse = np.sqrt(mean_squared_error(y_test, test_predictions))
-    r2 = r2_score(y_test, test_predictions)
-
-    baseline_test = np.maximum(
-        test_data["dengue_cases"].to_numpy(), 0
+    joblib.dump(
+        {
+            "model": model,
+            "feature_columns": FEATURE_COLUMNS,
+            "categorical_features": CATEGORICAL_FEATURES,
+            "horizon_weeks": weeks
+        },
+        model_path
     )
 
-    baseline_mae = mean_absolute_error(y_test, baseline_test)
-
-    print("\nFINAL TEST RESULTS")
-    print("Model:", best_model_name)
-    print("MAE:", round(mae, 3))
-    print("RMSE:", round(rmse, 3))
-    print("R2:", round(r2, 3))
-    print("Baseline MAE:", round(baseline_mae, 3))
-
-    # Save the trained pipeline.
-    model_path = f"models/model_{horizon}w.joblib"
-
-    joblib.dump(final_model, model_path)
-
-    print("Saved:", model_path)
+    print(f"Model saved: {model_path}")
 
 
-print("\nMODEL TRAINING COMPLETED!")
+print("\nTraining completed successfully.")
