@@ -7,7 +7,7 @@ The repository currently contains two related but separate application tracks:
 1. **Forecasting/data track:** validate and transform ward-level CSV data, train two- and four-week regressors, and save serialized scikit-learn pipelines.
 2. **Web/authentication track:** serve FastAPI/Jinja pages and provide hospital-user and administrator registration, login, logout, and access control backed by SQLAlchemy.
 
-The current code does **not** connect the saved forecasting models to the FastAPI application. There is no implemented inference endpoint or dynamic ward-risk prediction dashboard in the reviewed implementation. The dashboards contain presentation/sample content; they must not be interpreted as live model output. Low/Medium/High/Critical risk-tier generation and alert delivery are not implemented in `src/train.py`.
+The current code does **not** connect the saved forecasting models to the FastAPI application. The hospital dashboard provides city/ward selectors and forecast empty, loading, error, and result views, but there is no implemented inference endpoint and selecting an area does not generate a prediction. Do not interpret the interface as live model output. Risk-tier generation and alert delivery are not implemented in `src/train.py`.
 
 ## 2. Forecasting data flow
 
@@ -214,7 +214,7 @@ Passing these checks verifies syntax and the test cases that exist. It does not 
 
 1. **Model serving:** `models/model_2w.joblib` and `models/model_4w.joblib` are training outputs; the web app does not load them or expose prediction endpoints.
 2. **Risk tiers:** the current training script predicts numeric case values. It does not define/calibrate Low, Medium, High, or Critical thresholds.
-3. **Dashboard integration:** current dashboard content includes static/sample statistics and is not a live ward-level forecasting display.
+3. **Dashboard integration:** the hospital dashboard provides dataset-backed city/ward selection and forecast result states, but no model API is connected and no forecast is generated.
 4. **Data semantics:** the input's `dengue_cases` field is preserved as provided; its incident-versus-cumulative meaning needs authoritative confirmation.
 5. **Production migrations:** SQLAlchemy table creation exists, but a versioned Alembic migration workflow is not yet configured.
 6. **Production validation:** verify deployment settings, secure cookies, Neon connectivity, model artifact handling, monitoring, and recovery procedures before operational use.

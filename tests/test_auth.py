@@ -23,7 +23,7 @@ from sqlalchemy.pool import StaticPool
 from starlette.middleware.sessions import SessionMiddleware
 
 from src.backend.auth import router as auth_router
-from src.backend.database import Base, get_db
+from src.backend.database import Base, build_engine, get_db
 from src.backend.models import User
 from src.backend.security import (
     get_csrf_token,
@@ -228,6 +228,57 @@ def test_registration_creates_hospital_user(auth_context):
 
         assert user.hashed_password != password
         assert verify_password(password, user.hashed_password)
+
+
+def test_registered_user_can_log_in(auth_context):
+    """A newly registered account can immediately use the login route."""
+
+    client, session_factory = auth_context
+    password = "StrongPassword123!"
+    csrf_token = get_test_csrf(client)
+
+    registration_response = client.post(
+        "/register",
+        data=registration_form(
+            csrf_token,
+            password=password,
+            confirm_password=password,
+        ),
+        follow_redirects=False,
+    )
+
+    assert registration_response.status_code == 303
+    assert registration_response.headers["location"].startswith("/login?")
+
+    login_response = client.post(
+        "/login",
+        data={
+            "email": "NEWHOSPITAL@example.com",
+            "password": password,
+            "csrf_token": get_test_csrf(client),
+        },
+        follow_redirects=False,
+    )
+
+    assert login_response.status_code == 303
+    assert login_response.headers["location"] == "/user_dashboard"
+
+    with session_factory() as db:
+        user = (
+            db.query(User)
+            .filter(User.email == "newhospital@example.com")
+            .one()
+        )
+        assert client.get("/_test/session").json()["user_id"] == user.id
+
+
+def test_production_database_rejects_sqlite(monkeypatch):
+    """Production auth storage must be persistent across app instances."""
+
+    monkeypatch.setenv("APP_ENV", "production")
+
+    with pytest.raises(RuntimeError, match="persistent PostgreSQL"):
+        build_engine("sqlite:///:memory:")
 
 
 def test_registration_rejects_invalid_csrf(auth_context):
@@ -727,7 +778,6 @@ def test_inactive_account_session_is_invalidated(auth_context):
     assert client.get("/_test/session").json()["user_id"] is None
 
 
-
 @pytest.mark.parametrize(
     "weak_password, expected_error",
     [
@@ -762,7 +812,6 @@ def test_registration_rejects_weak_passwords(
 
     with session_factory() as db:
         assert db.query(User).count() == 0
-
 
 
 @pytest.mark.parametrize(

@@ -2,7 +2,7 @@
 
 AEDISIGHT is a Bangladesh-focused prototype for exploring ward-level dengue forecasting from historical dengue, weather, and vulnerability data. The repository contains a data-cleaning and feature-engineering pipeline, two-week and four-week model training, and a FastAPI web application with hospital-user and administrator authentication.
 
-> **Implementation status:** the data preparation, model-training script, and authentication workflow are present. The trained forecasting models are **not yet connected to the web dashboards**: there is no implemented prediction API or dynamic ward-risk dashboard in the current code. Dashboard statistics and visualizations should be treated as presentation placeholders, not live dengue predictions. Risk-tier generation (Low / Medium / High / Critical) is also not implemented by the current training script.
+> **Implementation status:** the data preparation, model-training script, and authentication workflow are present. The hospital dashboard provides city/ward selection and forecast-result states, but the trained models are **not yet connected**: there is no prediction API and no live forecasts, driver explanations, or risk-tier generation. Dashboard selections do not generate or store predictions.
 
 ## What is implemented
 
@@ -10,6 +10,7 @@ AEDISIGHT is a Bangladesh-focused prototype for exploring ward-level dengue fore
 - Two- and four-week dengue-case forecasting model training in `src/train.py`.
 - Chronological train/validation/test evaluation using the date of the future target.
 - FastAPI pages and authentication routes for public registration, login, logout, and role-protected dashboards.
+- A responsive ward-forecast workspace with five dataset-backed cities, dependent ward selection, two-/four-week controls, and empty/loading/error/result views. The form looks for an optional `window.aedisightForecastService.generate({city, ward, horizonWeeks})` adapter; no adapter or prediction API is currently connected.
 - Argon2 password hashing, CSRF tokens, signed session cookies, and an administrator provisioning CLI.
 - SQLite for local development and SQLAlchemy-compatible PostgreSQL configuration for deployment.
 
@@ -175,7 +176,7 @@ Review the target account and type `PROMOTE` when prompted. The command does not
 
 ## Production configuration (PostgreSQL / Neon)
 
-Set environment variables in the hosting provider's secret/environment settings. Do not upload a production `.env` file.
+Set environment variables in the hosting provider's secret/environment settings. Do not upload a production `.env` file. Production must use a persistent PostgreSQL database; the app now rejects SQLite when `APP_ENV=production` because serverless instances do not share local database files.
 
 ```dotenv
 APP_ENV=production

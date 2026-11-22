@@ -48,6 +48,17 @@ def build_engine(database_url: str) -> Engine:
 
     backend = url.get_backend_name()
 
+    if (
+        backend == "sqlite"
+        and os.getenv("APP_ENV", "development").strip().lower()
+        == "production"
+    ):
+        raise RuntimeError(
+            "SQLite is not supported in production because local database "
+            "files are not shared or durable on serverless deployments. "
+            "Configure DATABASE_URL with a persistent PostgreSQL database."
+        )
+
     engine_options = {
         "pool_pre_ping": True,
     }
