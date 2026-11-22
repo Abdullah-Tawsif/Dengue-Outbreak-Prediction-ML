@@ -1,6 +1,7 @@
 """Authentication endpoints for registration, login and logout."""
 
 import logging
+import re
 from urllib.parse import urlencode
 
 from email_validator import EmailNotValidError, validate_email
@@ -72,6 +73,61 @@ def normalize_email(email: str) -> str:
     except EmailNotValidError as exc:
         raise ValueError("Enter a valid email address.") from exc
 
+# Email endings accepted for new registrations. Edit this list to allow more.
+ALLOWED_EMAIL_DOMAIN_ENDINGS = (
+    ".com",
+    ".edu",
+    ".org",
+    ".net",
+    ".gov",
+    ".com.bd",
+    ".edu.bd",
+    ".org.bd",
+    ".net.bd",
+    ".gov.bd",
+    ".ac.bd",
+)
+
+
+def validate_email_domain(email: str) -> str | None:
+    """
+    Return an error message if the email domain ending is not allowed.
+
+    Used for registration only, so existing accounts can still log in.
+    Returns None when the domain is acceptable.
+    """
+
+    domain = email.rsplit("@", 1)[-1].casefold()
+
+    if not domain.endswith(ALLOWED_EMAIL_DOMAIN_ENDINGS):
+        return (
+            "Use an email ending in .com, .edu, .org, .net, .gov "
+            "or a Bangladeshi domain such as .com.bd or .edu.bd."
+        )
+
+    return None
+
+
+def validate_password_strength(password: str) -> str | None:
+    """
+    Return an error message if the password is too weak.
+
+    Requires at least one letter, one number and one special character.
+    Returns None when the password is acceptable.
+    """
+
+    if not re.search(r"[A-Za-z]", password):
+        return "Password must contain at least one letter."
+
+    if not re.search(r"[0-9]", password):
+        return "Password must contain at least one number."
+
+    if not re.search(r"[^A-Za-z0-9]", password):
+        return "Password must contain at least one special character."
+
+    return None
+
+
 @router.post("/register", name="register")
 def register_user(
     request: Request,
@@ -122,6 +178,14 @@ def register_user(
             error=str(exc),
         )
 
+    domain_error = validate_email_domain(email)
+
+    if domain_error:
+        return redirect_with_message(
+            "/register",
+            error=domain_error,
+        )
+
     # 5. Validate password.
     if len(password) < 8:
         return redirect_with_message(
@@ -133,6 +197,14 @@ def register_user(
         return redirect_with_message(
             "/register",
             error="Password cannot exceed 128 characters.",
+        )
+
+    strength_error = validate_password_strength(password)
+
+    if strength_error:
+        return redirect_with_message(
+            "/register",
+            error=strength_error,
         )
 
     if password != confirm_password:

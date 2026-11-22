@@ -725,3 +725,95 @@ def test_inactive_account_session_is_invalidated(auth_context):
     assert response.headers["location"] == "/login"
 
     assert client.get("/_test/session").json()["user_id"] is None
+
+
+
+@pytest.mark.parametrize(
+    "weak_password, expected_error",
+    [
+        ("12345678", "Password must contain at least one letter."),
+        ("abcdefgh!", "Password must contain at least one number."),
+        ("Password123", "Password must contain at least one special character."),
+    ],
+)
+def test_registration_rejects_weak_passwords(
+    auth_context,
+    weak_password,
+    expected_error,
+):
+    """Passwords need a letter, a number and a special character."""
+
+    client, session_factory = auth_context
+
+    csrf_token = get_test_csrf(client)
+
+    response = client.post(
+        "/register",
+        data=registration_form(
+            csrf_token,
+            password=weak_password,
+            confirm_password=weak_password,
+        ),
+        follow_redirects=False,
+    )
+
+    assert response.status_code == 303
+    assert get_redirect_error(response) == expected_error
+
+    with session_factory() as db:
+        assert db.query(User).count() == 0
+
+
+
+@pytest.mark.parametrize(
+    "email",
+    [
+        "cscr@gmail.co",
+        "user@example.xyz",
+        "user@hospital.bd",
+    ],
+)
+def test_registration_rejects_unsupported_email_domain(auth_context, email):
+    """Email addresses must end in an allowed domain such as .com or .edu."""
+
+    client, session_factory = auth_context
+    token = get_test_csrf(client)
+
+    response = client.post(
+        "/register",
+        data=registration_form(token, email=email),
+        follow_redirects=False,
+    )
+
+    assert response.status_code == 303
+    assert "Use an email ending in" in get_redirect_error(response)
+
+    with session_factory() as db:
+        assert db.query(User).count() == 0
+
+
+@pytest.mark.parametrize(
+    "email",
+    [
+        "doctor@hospital.com",
+        "admin@dmc.edu.bd",
+        "staff@health.gov.bd",
+    ],
+)
+def test_registration_accepts_allowed_email_domain(auth_context, email):
+    """Allowed domain endings must still register successfully."""
+
+    client, session_factory = auth_context
+    token = get_test_csrf(client)
+
+    response = client.post(
+        "/register",
+        data=registration_form(token, email=email),
+        follow_redirects=False,
+    )
+
+    assert response.status_code == 303
+    assert response.headers["location"].startswith("/login")
+
+    with session_factory() as db:
+        assert db.query(User).count() == 1

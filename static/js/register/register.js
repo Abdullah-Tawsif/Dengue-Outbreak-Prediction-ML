@@ -124,6 +124,42 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
     // ------------------------------------------
+    // PASSWORD RULES (letter + number + special character)
+    // ------------------------------------------
+
+    function checkPasswordRules() {
+
+        if (!password) {
+            return;
+        }
+
+        const value = password.value;
+
+        if (!value) {
+            password.setCustomValidity("");
+            return;
+        }
+
+        if (!/[A-Za-z]/.test(value)) {
+            password.setCustomValidity(
+                "Password must contain at least one letter."
+            );
+        } else if (!/[0-9]/.test(value)) {
+            password.setCustomValidity(
+                "Password must contain at least one number."
+            );
+        } else if (!/[^A-Za-z0-9]/.test(value)) {
+            password.setCustomValidity(
+                "Password must contain at least one special character."
+            );
+        } else {
+            password.setCustomValidity("");
+        }
+
+    }
+
+
+    // ------------------------------------------
     // CONFIRM PASSWORD
     // ------------------------------------------
 
@@ -167,6 +203,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (password) {
         password.addEventListener("input", () => {
+            checkPasswordRules();
             updatePasswordStrength();
             checkPasswordMatch();
         });
@@ -196,6 +233,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             }
 
+            checkPasswordRules();
             checkPasswordMatch();
 
             if (!form.checkValidity()) {
