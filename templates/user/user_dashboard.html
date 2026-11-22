@@ -117,11 +117,11 @@
             Model service not connected
           </span>
           <span class="panel-kicker">DENGUE EARLY WARNING</span>
-          <h2 id="welcome-title">Explore a ward forecast.</h2>
+          <h2 id="welcome-title">Explore a ward-level dengue forecast.</h2>
           <p>
-            Select a city, ward, and forecast period. The interface is ready,
-            but predictions will remain unavailable until the model service
-            is connected.
+            Choose a city, ward, and 2- or 4-week period to prepare a dengue
+            forecast request. Results will appear once the model service is
+            connected.
           </p>
         </div>
 
@@ -205,14 +205,14 @@
             </button>
 
             <p class="form-message" id="forecastMessage" role="status" aria-live="polite">
-              Select a city and ward to prepare your forecast request.
+              Select a city and ward to prepare your dengue forecast request.
             </p>
           </form>
 
           <div class="data-freshness">
             <span class="freshness-icon" aria-hidden="true">◷</span>
             <div>
-              <strong>Historical training dataset</strong>
+              <strong>Historical dengue data</strong>
               <span>Observations through 29 Dec 2025 · not live data</span>
             </div>
           </div>
@@ -242,8 +242,8 @@
                 <circle cx="37" cy="15" r="2"></circle>
               </svg>
             </div>
-            <h3>No forecast generated yet</h3>
-            <p>Choose an area and period. No prediction is shown until a model response is available.</p>
+            <h3>No dengue forecast generated yet</h3>
+            <p>Choose an area and period. Results appear only when the model service returns a prediction.</p>
           </div>
 
           <div class="result-state loading-state" id="forecastLoading" role="status" aria-live="polite" hidden>
@@ -284,13 +284,13 @@
         <article class="panel drivers-panel" aria-labelledby="drivers-title">
           <div class="panel-head">
             <div>
-              <span class="panel-kicker">03 · WEATHER DRIVERS</span>
-              <h2 id="drivers-title">What influenced this forecast?</h2>
+              <span class="panel-kicker">03 · FORECAST DRIVERS</span>
+              <h2 id="drivers-title">Factors behind the forecast</h2>
             </div>
           </div>
 
           <p class="detail-empty" id="driversEmpty">
-            Driver explanations will appear after a successful prediction.
+            Explanations for rainfall, temperature, humidity, and recent dengue cases will appear when provided by the model service.
           </p>
           <dl class="driver-list" id="driverList" hidden>
             <div>
@@ -306,7 +306,7 @@
               <dd id="humidityDriver">—</dd>
             </div>
             <div>
-              <dt>Recent dengue cases</dt>
+              <dt>Recent reported dengue cases</dt>
               <dd id="recentCasesDriver">—</dd>
             </div>
           </dl>
@@ -315,15 +315,15 @@
         <article class="panel chart-panel" aria-labelledby="chart-title">
           <div class="panel-head">
             <div>
-              <span class="panel-kicker">04 · CASE HISTORY</span>
-              <h2 id="chart-title">Historical cases vs forecast</h2>
+              <span class="panel-kicker">04 · DENGUE CASE HISTORY</span>
+              <h2 id="chart-title">Reported cases and forecast</h2>
             </div>
           </div>
 
           <div class="chart-empty" id="chartEmpty">
             <span class="chart-empty-icon" aria-hidden="true">⌁</span>
             <p>No forecast generated yet</p>
-            <small>Historical and forecast series will appear here after a successful prediction.</small>
+            <small>Historical dengue counts and forecast values will appear here after a successful prediction.</small>
           </div>
 
           <div class="chart-content" id="chartContent" hidden>
@@ -379,7 +379,7 @@
       </section>
 
       <footer class="dashboard-footer">
-        <span>AEDISIGHT · Health intelligence</span>
+        <span>AEDISIGHT · Dengue early-warning workspace</span>
         <span>
           This interface does not currently provide live dengue predictions.
         </span>
