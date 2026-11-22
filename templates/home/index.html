@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="stylesheet" href="/static/index.css">
-  <title>AEDISIGHT — Pathogens in Motion</title>
+  <link rel="stylesheet" href="/static/index.css" />
+  <title>AEDISIGHT — Urban Dengue Outbreak Early-Warning</title>
 
   <!-- Google Fonts: Plus Jakarta Sans + Cormorant Garamond + JetBrains Mono -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -36,20 +36,15 @@
       },
     };
   </script>
-
-  
 </head>
 <body class="antialiased selection:bg-oxyHemoglobin selection:text-cellularMist">
   <a class="skip-link" href="#main-content">Skip to content</a>
-
-  <!-- Hidden File Input so user can load their own microscopy slide image anytime -->
-  <input type="file" id="custom-slide-input" accept="image/*" class="hidden" />
 
   <!-- ==================== MINIMALIST TRANSLUCENT NAVBAR ==================== -->
   <header class="fixed top-0 inset-x-0 z-50 bg-gradient-to-b from-abyssalVein/95 via-abyssalVein/75 to-transparent backdrop-blur-md">
     <div class="max-w-7xl mx-auto px-5 sm:px-8 lg:px-12">
       <div class="flex items-center justify-between h-20">
-        <!-- Brand Mark: Spiked Virion / Cellular Starburst + AEDISIGHT -->
+        <!-- Brand Mark -->
         <a href="#" class="flex items-center gap-3 group focus:outline-none">
           <svg class="w-5 h-5 text-cellularMist group-hover:text-plasmaRose group-hover:rotate-45 transition-all duration-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
             <circle cx="12" cy="12" r="5" />
@@ -65,20 +60,18 @@
         </a>
 
         <!-- Desktop Navigation Links -->
-        <nav class="hidden md:flex items-center gap-9 text-xs tracking-wide text-cellularMist/70">
-          <a href="#pathogens" class="hover:text-cellularMist transition-colors">Pathogens</a>
-          <a href="#research" class="hover:text-cellularMist transition-colors">Research</a>
-          <a href="#palette" class="hover:text-cellularMist transition-colors">Palette</a>
-          <a href="#pathogens" class="hover:text-cellularMist transition-colors">Insights</a>
-          <a href="#contact" class="hover:text-cellularMist transition-colors">Contact</a>
+        <nav class="hidden md:flex items-center gap-8 text-xs tracking-wide text-cellularMist/70">
+          <a href="#pipeline" class="hover:text-cellularMist transition-colors">Pipeline</a>
+          <a href="#scenarios" class="hover:text-cellularMist transition-colors">Scenarios</a>
+          <a href="#controls" class="hover:text-cellularMist transition-colors">Controls</a>
           <a href="/login" class="hover:text-plasmaRose transition-colors">Login</a>
           <a href="/register" class="inline-flex items-center px-4 py-2 rounded-full border border-plasmaRose/50 text-cellularMist hover:bg-oxyHemoglobin/30 hover:border-plasmaRose transition-colors">Sign Up</a>
         </nav>
 
         <!-- Right Pill CTA + Mobile Hamburger -->
         <div class="flex items-center gap-3">
-          <a href="#contact" class="hidden sm:inline-flex items-center gap-2.5 pl-4 pr-2 py-1.5 rounded-full pill-cta-crimson text-xs font-medium text-cellularMist">
-            <span>Analyze Sample</span>
+          <a href="/login" class="hidden sm:inline-flex items-center gap-2.5 pl-4 pr-2 py-1.5 rounded-full pill-cta-crimson text-xs font-medium text-cellularMist">
+            <span>Predict Risk</span>
             <span class="w-6 h-6 rounded-full bg-gradient-to-br from-plasmaRose to-oxyHemoglobin text-abyssalVein flex items-center justify-center">
               <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M7 17L17 7M7 7h10v10" />
@@ -106,655 +99,335 @@
 
     <!-- Mobile Collapsible Navigation Drawer -->
     <div id="mobile-menu" class="hidden md:hidden bg-abyssalVein/95 border-b border-plasmaRose/15 px-6 py-6 space-y-4">
-      <a href="#pathogens" class="mobile-nav-link block text-sm text-cellularMist/80 hover:text-plasmaRose">Pathogens</a>
-      <a href="#research" class="mobile-nav-link block text-sm text-cellularMist/80 hover:text-plasmaRose">Research</a>
-      <a href="#palette" class="mobile-nav-link block text-sm text-cellularMist/80 hover:text-plasmaRose">Palette</a>
-      <a href="#contact" class="mobile-nav-link block text-sm text-cellularMist/80 hover:text-plasmaRose">Contact</a>
+      <a href="#pipeline" class="mobile-nav-link block text-sm text-cellularMist/80 hover:text-plasmaRose">Pipeline</a>
+      <a href="#scenarios" class="mobile-nav-link block text-sm text-cellularMist/80 hover:text-plasmaRose">Scenarios</a>
+      <a href="#controls" class="mobile-nav-link block text-sm text-cellularMist/80 hover:text-plasmaRose">Controls</a>
       <a href="/login" class="mobile-nav-link block text-sm text-cellularMist/80 hover:text-plasmaRose">Login</a>
       <a href="/register" class="mobile-nav-link block text-sm text-cellularMist/80 hover:text-plasmaRose">Sign Up</a>
     </div>
   </header>
 
-  <!-- ==================== HERO SECTION: SEAMLESS MOVING BLOODSTREAM + GERMS & VIRUSES ==================== -->
   <main id="main-content">
-  <section class="relative min-h-screen flex items-center pt-24 pb-16 overflow-hidden bg-abyssalVein">
-    <!-- Layer 1: Continuous Seamless Mirrored Arterial Endothelium Panoramic Track -->
-    <div class="absolute inset-0 z-0 overflow-hidden">
-      <div class="vessel-loop-track" aria-hidden="true">
-        <div class="vessel-tile hero-vessel-tile"></div>
-        <div class="vessel-tile vessel-tile-mirrored hero-vessel-tile"></div>
-        <div class="vessel-tile hero-vessel-tile"></div>
-        <div class="vessel-tile vessel-tile-mirrored hero-vessel-tile"></div>
+    <!-- ==================== HERO SECTION ==================== -->
+    <section class="relative min-h-screen flex items-center pt-24 pb-16 overflow-hidden bg-abyssalVein">
+      <div class="absolute inset-0 z-0 overflow-hidden">
+        <div class="vessel-loop-track" aria-hidden="true">
+          <div class="vessel-tile hero-vessel-tile"></div>
+          <div class="vessel-tile vessel-tile-mirrored hero-vessel-tile"></div>
+          <div class="vessel-tile hero-vessel-tile"></div>
+          <div class="vessel-tile vessel-tile-mirrored hero-vessel-tile"></div>
+        </div>
+
+        <!-- Real-Time 60fps Animated Canvas -->
+        <canvas id="hero-bloodstream-canvas" class="absolute inset-0 w-full h-full pointer-events-none"></canvas>
       </div>
 
-      <!-- Real-Time 60fps Bloodstream Canvas: Erythrocytes, Spiked Virions, Rod Bacilli & Leukocytes -->
-      <canvas id="hero-bloodstream-canvas" class="absolute inset-0 w-full h-full pointer-events-none"></canvas>
-    </div>
+      <div
+        id="hero-crimson-grade"
+        class="absolute inset-0 z-0 pointer-events-none transition-opacity duration-700"
+        style="background: radial-gradient(circle at 68% 46%, rgba(217, 107, 125, 0.24) 0%, rgba(158, 27, 50, 0.36) 36%, rgba(84, 11, 22, 0.62) 66%, #2E0209 100%); mix-blend-mode: color;"
+      ></div>
+      <div
+        id="hero-crimson-multiply"
+        class="absolute inset-0 z-0 pointer-events-none transition-opacity duration-700"
+        style="background: linear-gradient(125deg, rgba(46, 2, 9, 0.65) 0%, rgba(84, 11, 22, 0.25) 52%, rgba(158, 27, 50, 0.14) 100%); mix-blend-mode: multiply;"
+      ></div>
+      <div class="absolute inset-0 z-0 pointer-events-none" style="background: var(--grad-hero-vignette);"></div>
+      <div
+        class="volumetric-ray absolute -top-32 right-[6%] w-[52rem] h-[72rem] z-0 pointer-events-none blur-2xl"
+        style="background: var(--grad-volumetric-beam);"
+      ></div>
+      <div
+        class="arterial-glow absolute bottom-[8%] right-[12%] w-[38rem] h-[24rem] rounded-full z-0 pointer-events-none blur-3xl"
+        style="background: radial-gradient(ellipse at center, rgba(217, 107, 125, 0.22) 0%, rgba(158, 27, 50, 0.12) 45%, transparent 75%);"
+      ></div>
 
-    <!-- Layer 2: Deep Arterial Crimson Color Grading Overlay (Toggleable with Vivid Microscopy Stain) -->
-    <div
-      id="hero-crimson-grade"
-      class="absolute inset-0 z-0 pointer-events-none transition-opacity duration-700"
-      style="background: radial-gradient(circle at 68% 46%, rgba(217, 107, 125, 0.24) 0%, rgba(158, 27, 50, 0.36) 36%, rgba(84, 11, 22, 0.62) 66%, #2E0209 100%); mix-blend-mode: color;"
-    ></div>
-    <div
-      id="hero-crimson-multiply"
-      class="absolute inset-0 z-0 pointer-events-none transition-opacity duration-700"
-      style="background: linear-gradient(125deg, rgba(46, 2, 9, 0.65) 0%, rgba(84, 11, 22, 0.25) 52%, rgba(158, 27, 50, 0.14) 100%); mix-blend-mode: multiply;"
-    ></div>
+      <!-- Hero Foreground Content -->
+      <div class="relative z-10 max-w-7xl mx-auto px-5 sm:px-8 lg:px-12 w-full my-auto">
+        <div class="max-w-xl">
+          <div class="inline-flex items-center gap-2.5 mb-5">
+            <span class="w-2 h-2 rounded-full bg-plasmaRose animate-ping"></span>
+            <p class="text-[11px] sm:text-xs font-medium uppercase tracking-[0.28em] text-plasmaRose/90">
+              AI FOR URBAN DENGUE OUTBREAK · DHAKA & CHATTOGRAM
+            </p>
+          </div>
 
-    <!-- Layer 3: Abyssal Vein Edge Vignette (#060102) ensuring crisp text contrast on the left -->
-    <div
-      class="absolute inset-0 z-0 pointer-events-none"
-      style="background: var(--grad-hero-vignette);"
-    ></div>
+          <h1 class="text-5xl sm:text-7xl lg:text-[5.15rem] font-light tracking-tight leading-[1.03] text-cellularMist">
+            Outbreaks<br />
+            <span class="font-light">in </span><span class="serif-crimson-accent font-normal text-[3.5rem] sm:text-[5rem] lg:text-[5.8rem] pr-2">Motion</span>
+          </h1>
 
-    <!-- Layer 4: Diagonal Volumetric Arterial Light Beam & Subsurface Plasma Glow -->
-    <div
-      class="volumetric-ray absolute -top-32 right-[6%] w-[52rem] h-[72rem] z-0 pointer-events-none blur-2xl"
-      style="background: var(--grad-volumetric-beam);"
-    ></div>
-    <div
-      class="arterial-glow absolute bottom-[8%] right-[12%] w-[38rem] h-[24rem] rounded-full z-0 pointer-events-none blur-3xl"
-      style="background: radial-gradient(ellipse at center, rgba(217, 107, 125, 0.22) 0%, rgba(158, 27, 50, 0.12) 45%, transparent 75%);"
-    ></div>
-
-    <!-- Hero Foreground Content -->
-    <div class="relative z-10 max-w-7xl mx-auto px-5 sm:px-8 lg:px-12 w-full my-auto">
-      <div class="max-w-xl">
-        <div class="inline-flex items-center gap-2.5 mb-5">
-          <span class="w-2 h-2 rounded-full bg-plasmaRose animate-ping"></span>
-          <p class="text-[11px] sm:text-xs font-medium uppercase tracking-[0.28em] text-plasmaRose/90">
-            CELLULAR BIOTECH &amp; HEMATOLOGY
+          <p class="mt-4 font-serif italic text-xl sm:text-2xl text-plasmaRose/90">
+            2-to-4-Week Early Warning from Weather Lags & Ward Vulnerability
           </p>
+
+          <p class="mt-4 text-sm sm:text-base text-cellularMist/70 leading-relaxed max-w-md font-light">
+            Forecasts ward-level dengue outbreak tiers (Low, Medium, High, Critical) from temperature, humidity, lagged rainfall, water logging, crowding, and sanitation before hospital surges peak[cite: 2, 3].
+          </p>
+
+          <!-- Live Telemetry Readout Pill -->
+          <div class="mt-6 inline-flex flex-wrap items-center gap-4 px-4 py-2 rounded-2xl bg-deepArterial/70 border border-plasmaRose/20 backdrop-blur-md text-[11px] font-mono text-cellularMist/80">
+            <span>LAG WINDOW: <strong class="text-plasmaRose">2–4 WKS</strong></span>
+            <span class="text-plasmaRose/40">|</span>
+            <span>RISK TIER: <strong id="hero-virion-count" class="text-cellularMist">LOW</strong></span>
+            <span class="text-plasmaRose/40">|</span>
+            <span>LARVAL MATURATION: <strong class="text-plasmaRose">7–14 DAYS</strong></span>
+          </div>
+
+          <div class="mt-8 flex flex-wrap items-center gap-3.5">
+            <a href="/register" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-clotShadow via-oxyHemoglobin to-plasmaRose text-cellularMist text-xs sm:text-sm font-medium hover:opacity-90 transition-opacity">
+              Create Account
+            </a>
+            <a href="/login" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-full border border-plasmaRose/40 bg-abyssalVein/60 text-cellularMist text-xs sm:text-sm hover:border-plasmaRose hover:bg-deepArterial/60 transition-colors">
+              Login
+            </a>
+            <a href="#scenarios" class="inline-flex items-center gap-4 pl-6 pr-2.5 py-2.5 rounded-full pill-cta-crimson text-xs sm:text-sm font-medium text-cellularMist group">
+              <span>Explore Outbreak Drivers</span>
+              <span class="w-8 h-8 rounded-full bg-gradient-to-br from-plasmaRose to-oxyHemoglobin text-abyssalVein flex items-center justify-center group-hover:scale-105 transition-transform">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M7 17L17 7M7 7h10v10" />
+                </svg>
+              </span>
+            </a>
+          </div>
         </div>
+      </div>
 
-        <h1 class="text-5xl sm:text-7xl lg:text-[5.15rem] font-light tracking-tight leading-[1.03] text-cellularMist">
-          Pathogens<br />
-          <span class="font-light">in </span><span class="serif-crimson-accent font-normal text-[3.5rem] sm:text-[5rem] lg:text-[5.8rem] pr-2">Motion</span>
-        </h1>
+      <!-- Bottom Centered Scroll Hairline -->
+      <div class="absolute bottom-7 inset-x-0 z-10 flex flex-col items-center gap-2.5 pointer-events-none">
+        <div class="w-px h-8 bg-gradient-to-b from-plasmaRose/65 to-transparent"></div>
+        <span class="text-[11px] tracking-widest text-cellularMist/50">Scroll to inspect outbreak mechanics</span>
+      </div>
+    </section>
 
-        <p class="mt-4 font-serif italic text-xl sm:text-2xl text-plasmaRose/90">
-          Flowing through Blood — Live Hemodynamic Telemetry
+    <!-- ==================== 4-COLUMN PIPELINE STRIP ==================== -->
+    <section id="pipeline" class="relative bg-abyssalVein py-20 sm:py-24 border-t border-plasmaRose/[0.10]">
+      <div class="max-w-7xl mx-auto px-5 sm:px-8 lg:px-12">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-plasmaRose/[0.10]">
+          <div class="group px-6 py-10 text-center flex flex-col items-center transition-colors duration-300 hover:bg-deepArterial/25">
+            <div class="w-14 h-14 rounded-full pillar-icon-halo flex items-center justify-center text-plasmaRose mb-6 group-hover:scale-110 transition-transform duration-300">
+              <span class="font-mono text-xs">01</span>
+            </div>
+            <h2 class="text-base font-medium text-cellularMist tracking-wide">Weather Ingestion</h2>
+            <p class="mt-3 text-xs text-cellularMist/55 leading-relaxed max-w-[220px]">
+              Ingests average temperature, rainfall, and relative humidity across wards and forecast windows[cite: 3].
+            </p>
+          </div>
+
+          <div class="group px-6 py-10 text-center flex flex-col items-center transition-colors duration-300 hover:bg-deepArterial/25">
+            <div class="w-14 h-14 rounded-full pillar-icon-halo flex items-center justify-center text-plasmaRose mb-6 group-hover:scale-110 transition-transform duration-300">
+              <span class="font-mono text-xs">02</span>
+            </div>
+            <h2 class="text-base font-medium text-cellularMist tracking-wide">Multi-Week Lags</h2>
+            <p class="mt-3 text-xs text-cellularMist/55 leading-relaxed max-w-[220px]">
+              Computes grouped ward-level rainfall lags matching 7–14 day mosquito maturation and 2–4 week case lag[cite: 2, 3].
+            </p>
+          </div>
+
+          <div class="group px-6 py-10 text-center flex flex-col items-center transition-colors duration-300 hover:bg-deepArterial/25">
+            <div class="w-14 h-14 rounded-full pillar-icon-halo flex items-center justify-center text-plasmaRose mb-6 group-hover:scale-110 transition-transform duration-300">
+              <span class="font-mono text-xs">03</span>
+            </div>
+            <h2 class="text-base font-medium text-cellularMist tracking-wide">Ward Vulnerability</h2>
+            <p class="mt-3 text-xs text-cellularMist/55 leading-relaxed max-w-[220px]">
+              Captures drainage bottlenecks, crowding, and sanitation gaps that turn rainfall into local hotspots[cite: 2].
+            </p>
+          </div>
+
+          <div class="group px-6 py-10 text-center flex flex-col items-center transition-colors duration-300 hover:bg-deepArterial/25">
+            <div class="w-14 h-14 rounded-full pillar-icon-halo flex items-center justify-center text-plasmaRose mb-6 group-hover:scale-110 transition-transform duration-300">
+              <span class="font-mono text-xs">04</span>
+            </div>
+            <h2 class="text-base font-medium text-cellularMist tracking-wide">Risk Tiers & Drivers</h2>
+            <p class="mt-3 text-xs text-cellularMist/55 leading-relaxed max-w-[220px]">
+              Generates Low, Medium, High, and Critical risk tiers with clear weather and vulnerability drivers[cite: 3].
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== SCENARIO SHOWCASE CAROUSEL (01 / 03) ==================== -->
+    <section id="scenarios" class="relative min-h-[84vh] flex items-center py-24 overflow-hidden bg-abyssalVein">
+      <div class="absolute inset-0 z-0 overflow-hidden">
+        <div class="vessel-loop-track reverse-drift" aria-hidden="true">
+          <div class="vessel-tile showcase-vessel-tile"></div>
+          <div class="vessel-tile vessel-tile-mirrored showcase-vessel-tile"></div>
+          <div class="vessel-tile showcase-vessel-tile"></div>
+          <div class="vessel-tile vessel-tile-mirrored showcase-vessel-tile"></div>
+        </div>
+        <!-- Dedicated Animated Showcase Canvas -->
+        <canvas id="showcase-bloodstream-canvas" class="absolute inset-0 w-full h-full pointer-events-none"></canvas>
+      </div>
+
+      <div
+        id="showcase-color-grade"
+        class="absolute inset-0 z-0 pointer-events-none transition-all duration-700"
+        style="background: radial-gradient(circle at 75% 35%, rgba(217, 107, 125, 0.24) 0%, rgba(158, 27, 50, 0.36) 34%, rgba(84, 11, 22, 0.64) 62%, #060102 100%); mix-blend-mode: color;"
+      ></div>
+      <div
+        id="showcase-color-multiply"
+        class="absolute inset-0 z-0 pointer-events-none transition-opacity duration-700"
+        style="background: linear-gradient(110deg, rgba(46, 2, 9, 0.68) 0%, rgba(84, 11, 22, 0.28) 55%, rgba(46, 2, 9, 0.18) 100%); mix-blend-mode: multiply;"
+      ></div>
+      <div class="absolute inset-0 z-0 pointer-events-none" style="background: var(--grad-showcase-vignette);"></div>
+      <div
+        class="volumetric-ray absolute -top-24 -right-12 w-[48rem] h-[68rem] z-0 pointer-events-none blur-2xl"
+        style="background: linear-gradient(215deg, rgba(247, 230, 233, 0.24) 0%, rgba(217, 107, 125, 0.16) 28%, rgba(158, 27, 50, 0.06) 54%, transparent 76%);"
+      ></div>
+
+      <div class="relative z-10 max-w-7xl mx-auto px-5 sm:px-8 lg:px-12 w-full">
+        <div class="max-w-lg">
+          <p id="showcase-overline" class="text-[11px] font-medium uppercase tracking-[0.28em] text-plasmaRose/85">
+            OUTBREAK DRIVER 01
+          </p>
+
+          <h2 id="showcase-title" class="mt-4 text-4xl sm:text-5xl lg:text-6xl font-light tracking-tight leading-[1.1] text-cellularMist">
+            The Vector<br />
+            <span class="serif-crimson-accent font-normal text-[2.85rem] sm:text-[3.75rem] lg:text-[4.35rem]">Breeding Clock</span>
+          </h2>
+
+          <p id="showcase-desc" class="mt-5 text-sm sm:text-base text-cellularMist/70 leading-relaxed font-light">
+            Stagnant water in drains and containers takes 7–14 days for Aedes aegypti eggs to mature into adult mosquitoes, followed by viral incubation and symptom onset 2–4 weeks after rain[cite: 2].
+          </p>
+
+          <div class="mt-14 flex items-center gap-5">
+            <div class="flex items-center gap-2.5">
+              <button
+                id="prev-slide-btn"
+                type="button"
+                aria-label="Previous Outbreak Driver"
+                class="w-10 h-10 rounded-full pill-cta-crimson flex items-center justify-center text-cellularMist/80 hover:text-cellularMist"
+              >
+                ←
+              </button>
+              <button
+                id="next-slide-btn"
+                type="button"
+                aria-label="Next Outbreak Driver"
+                class="w-10 h-10 rounded-full pill-cta-crimson flex items-center justify-center text-cellularMist/80 hover:text-cellularMist"
+              >
+                →
+              </button>
+            </div>
+            <span id="slide-counter" class="font-mono text-xs tracking-widest text-cellularMist/60">
+              01 / 03
+            </span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== SIMULATION & FLOW CONTROLS (DARK RED GRADIENT THEME) ==================== -->
+    <section id="controls" class="relative bg-abyssalVein py-24 border-t border-plasmaRose/[0.10] overflow-hidden">
+      <div
+        class="absolute inset-0 pointer-events-none"
+        style="background: radial-gradient(circle at 50% 50%, rgba(84, 11, 22, 0.28) 0%, rgba(46, 2, 9, 0.10) 42%, transparent 72%);"
+      ></div>
+
+      <div class="relative z-10 max-w-7xl mx-auto px-5 sm:px-8 lg:px-12">
+        <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-8">
+          <div>
+            <p class="text-[11px] font-medium uppercase tracking-[0.28em] text-plasmaRose/85">
+              VISUALIZATION & SCENARIO CONTROLS
+            </p>
+            <h2 class="mt-3 text-3xl sm:text-4xl font-light text-cellularMist">
+              Outbreak <span class="serif-crimson-accent text-4xl sm:text-5xl">Pressure</span> Controls
+            </h2>
+            <p class="mt-2 text-xs sm:text-sm text-cellularMist/60 max-w-lg font-light">
+              Toggle animation flow or preview higher lagged rainfall and larval density levels before opening the prediction dashboard[cite: 2, 3].
+            </p>
+          </div>
+
+          <div class="flex flex-col sm:flex-row flex-wrap items-start sm:items-center gap-3.5">
+            <button
+              id="btn-toggle-flow"
+              type="button"
+              class="inline-flex items-center gap-2 px-4 py-2 rounded-full pill-cta-crimson text-xs font-mono text-plasmaRose hover:text-cellularMist"
+            >
+              <span id="flow-status-dot" class="w-2 h-2 rounded-full bg-plasmaRose animate-pulse"></span>
+              <span id="flow-status-text">Pause Flow</span>
+            </button>
+
+            <div class="inline-flex items-center gap-3 px-4 py-2 rounded-full pill-cta-crimson">
+              <label for="pathogen-load-slider" class="text-[11px] font-mono text-cellularMist/80 whitespace-nowrap">
+                Lag Pressure: <span id="pathogen-load-label" class="text-plasmaRose font-medium">Low (1.0x)</span>
+              </label>
+              <input
+                id="pathogen-load-slider"
+                type="range"
+                min="1"
+                max="3"
+                step="1"
+                value="1"
+                class="crimson-slider w-24"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== CLOSING CTA ==================== -->
+    <section class="relative bg-abyssalVein py-28 sm:py-36 border-t border-plasmaRose/[0.10] overflow-hidden">
+      <div
+        class="absolute inset-0 pointer-events-none"
+        style="background: radial-gradient(circle at 50% 50%, rgba(84, 11, 22, 0.28) 0%, rgba(46, 2, 9, 0.10) 42%, transparent 72%);"
+      ></div>
+
+      <div class="relative z-10 max-w-4xl mx-auto px-5 sm:px-8 text-center">
+        <p class="text-[11px] font-medium uppercase tracking-[0.28em] text-plasmaRose/80">
+          PUBLIC HEALTH EARLY-WARNING SYSTEM
         </p>
 
-        <p class="mt-4 text-sm sm:text-base text-cellularMist/70 leading-relaxed max-w-md font-light">
-          Real-time visualization of spiked virions, flagellated bacilli, biconcave erythrocytes, and leukocytes navigating deep arterial plasma currents.
-        </p>
+        <h2 class="mt-4 text-3xl sm:text-5xl font-light tracking-tight text-cellularMist">
+          Ready to forecast <span class="serif-crimson-accent font-normal text-4xl sm:text-6xl">ward outbreak risk?</span>
+        </h2>
 
-        <!-- Live Telemetry Readout Pill -->
-        <div class="mt-6 inline-flex flex-wrap items-center gap-4 px-4 py-2 rounded-2xl bg-deepArterial/70 border border-plasmaRose/20 backdrop-blur-md text-[11px] font-mono text-cellularMist/80">
-          <span>RBC: <strong class="text-plasmaRose">4.9M/µL</strong></span>
-          <span class="text-plasmaRose/40">|</span>
-          <span>VIRIONS: <strong id="hero-virion-count" class="text-cellularMist">ACTIVE</strong></span>
-          <span class="text-plasmaRose/40">|</span>
-          <span>FLOW: <strong class="text-plasmaRose">38 cm/s</strong></span>
-        </div>
-
-        <div class="mt-8 flex flex-wrap items-center gap-3.5">
-          <a href="/register" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-clotShadow via-oxyHemoglobin to-plasmaRose text-cellularMist text-xs sm:text-sm font-medium hover:opacity-90 transition-opacity">
-            Create Account
-          </a>
-          <a href="/login" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-full border border-plasmaRose/40 bg-abyssalVein/60 text-cellularMist text-xs sm:text-sm hover:border-plasmaRose hover:bg-deepArterial/60 transition-colors">
-            Login
-          </a>
-          <a href="#pathogens" class="inline-flex items-center gap-4 pl-6 pr-2.5 py-2.5 rounded-full pill-cta-crimson text-xs sm:text-sm font-medium text-cellularMist group">
-            <span>Explore Pathogens</span>
+        <div class="mt-9 flex justify-center gap-4">
+          <a
+            href="/login"
+            class="inline-flex items-center gap-4 pl-6 pr-2.5 py-2.5 rounded-full pill-cta-crimson text-xs sm:text-sm font-medium text-cellularMist group"
+          >
+            <span>Open Prediction Workspace</span>
             <span class="w-8 h-8 rounded-full bg-gradient-to-br from-plasmaRose to-oxyHemoglobin text-abyssalVein flex items-center justify-center group-hover:scale-105 transition-transform">
               <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M7 17L17 7M7 7h10v10" />
               </svg>
             </span>
           </a>
-
-          <!-- Upload custom microscopy slide image into the seamless vessel loop -->
-          <button
-            type="button"
-            onclick="document.getElementById('custom-slide-input').click()"
-            class="inline-flex items-center gap-2 px-4 py-2.5 rounded-full border border-plasmaRose/25 bg-abyssalVein/60 hover:border-plasmaRose/60 text-xs text-plasmaRose hover:text-cellularMist backdrop-blur-md transition-all"
-          >
-            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M12 4v12m0-12l-4 4m4-4l4 4" />
-            </svg>
-            <span>Upload Microscopy Slide</span>
-          </button>
         </div>
       </div>
-    </div>
-
-    <!-- Bottom Centered Scroll Hairline -->
-    <div class="absolute bottom-7 inset-x-0 z-10 flex flex-col items-center gap-2.5 pointer-events-none">
-      <div class="w-px h-8 bg-gradient-to-b from-plasmaRose/65 to-transparent"></div>
-      <span class="text-[11px] tracking-widest text-cellularMist/50">Scroll to inspect bloodstream</span>
-    </div>
-  </section>
-
-  <!-- ==================== 4-COLUMN PILLAR STRIP (VIROLOGY, BACTERIOLOGY, HEMATOLOGY, IMMUNOLOGY) ==================== -->
-  <section id="research" class="relative bg-abyssalVein py-20 sm:py-24 border-t border-plasmaRose/[0.10]">
-    <div class="max-w-7xl mx-auto px-5 sm:px-8 lg:px-12">
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-plasmaRose/[0.10]">
-        <!-- Pillar 1: Virology -->
-        <div class="group px-6 py-10 text-center flex flex-col items-center transition-colors duration-300 hover:bg-deepArterial/25">
-          <div class="w-14 h-14 rounded-full pillar-icon-halo flex items-center justify-center text-plasmaRose mb-6 group-hover:scale-110 transition-transform duration-300">
-            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
-              <circle cx="12" cy="12" r="4.5" />
-              <path stroke-linecap="round" d="M12 3v3M12 18v3M3 12h3M18 12h3M5.64 5.64l2.12 2.12M16.24 16.24l2.12 2.12M18.36 5.64l-2.12 2.12M7.76 16.24l-2.12 2.12" />
-            </svg>
-          </div>
-          <h2 class="text-base font-medium text-cellularMist tracking-wide">Virology</h2>
-          <p class="mt-3 text-xs text-cellularMist/55 leading-relaxed max-w-[210px]">
-            Spike glycoprotein binding kinetics and capsid structural dynamics in plasma.
-          </p>
-          <a href="#pathogens" aria-label="Explore Virology" class="mt-6 text-plasmaRose/65 group-hover:text-plasmaRose group-hover:translate-x-1 transition-all text-sm">
-            &rarr;
-          </a>
-        </div>
-
-        <!-- Pillar 2: Bacteriology -->
-        <div class="group px-6 py-10 text-center flex flex-col items-center transition-colors duration-300 hover:bg-deepArterial/25">
-          <div class="w-14 h-14 rounded-full pillar-icon-halo flex items-center justify-center text-plasmaRose mb-6 group-hover:scale-110 transition-transform duration-300">
-            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
-              <rect x="6" y="4" width="6" height="12" rx="3" transform="rotate(35 9 10)" />
-              <path stroke-linecap="round" d="M6 15c-2 2-1 4-3 5M9 17c-1.5 2.5 0 4-2 5" />
-            </svg>
-          </div>
-          <h2 class="text-base font-medium text-cellularMist tracking-wide">Bacteriology</h2>
-          <p class="mt-3 text-xs text-cellularMist/55 leading-relaxed max-w-[210px]">
-            Flagellar propulsion and chemotactic motility of rod-shaped bacilli under shear flow.
-          </p>
-          <a href="#pathogens" aria-label="Explore Bacteriology" class="mt-6 text-plasmaRose/65 group-hover:text-plasmaRose group-hover:translate-x-1 transition-all text-sm">
-            &rarr;
-          </a>
-        </div>
-
-        <!-- Pillar 3: Hematology -->
-        <div class="group px-6 py-10 text-center flex flex-col items-center transition-colors duration-300 hover:bg-deepArterial/25">
-          <div class="w-14 h-14 rounded-full pillar-icon-halo flex items-center justify-center text-plasmaRose mb-6 group-hover:scale-110 transition-transform duration-300">
-            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
-              <ellipse cx="12" cy="12" rx="8" ry="6" />
-              <ellipse cx="12" cy="12" rx="3.5" ry="2.2" />
-            </svg>
-          </div>
-          <h2 class="text-base font-medium text-cellularMist tracking-wide">Hematology</h2>
-          <p class="mt-3 text-xs text-cellularMist/55 leading-relaxed max-w-[210px]">
-            Biconcave erythrocyte deformation, oxygen transport, and microvascular rheology.
-          </p>
-          <a href="#pathogens" aria-label="Explore Hematology" class="mt-6 text-plasmaRose/65 group-hover:text-plasmaRose group-hover:translate-x-1 transition-all text-sm">
-            &rarr;
-          </a>
-        </div>
-
-        <!-- Pillar 4: Immunology -->
-        <div class="group px-6 py-10 text-center flex flex-col items-center transition-colors duration-300 hover:bg-deepArterial/25">
-          <div class="w-14 h-14 rounded-full pillar-icon-halo flex items-center justify-center text-plasmaRose mb-6 group-hover:scale-110 transition-transform duration-300">
-            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M12 3c3.5 0 7 2 7 6.5 0 4.5-3.5 9.5-7 11.5-3.5-2-7-7-7-11.5C5 5 8.5 3 12 3z" />
-              <circle cx="12" cy="10" r="2.2" />
-            </svg>
-          </div>
-          <h2 class="text-base font-medium text-cellularMist tracking-wide">Immunology</h2>
-          <p class="mt-3 text-xs text-cellularMist/55 leading-relaxed max-w-[210px]">
-            Amoeboid leukocyte surveillance, phagocytosis, and antibody neutralization.
-          </p>
-          <a href="#pathogens" aria-label="Explore Immunology" class="mt-6 text-plasmaRose/65 group-hover:text-plasmaRose group-hover:translate-x-1 transition-all text-sm">
-            &rarr;
-          </a>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ==================== FULL-BLEED PATHOGEN SHOWCASE CAROUSEL (01 / 03) ==================== -->
-  <section id="pathogens" class="relative min-h-[84vh] flex items-center py-24 overflow-hidden bg-abyssalVein">
-    <!-- Continuous Seamless Moving Vessel Track -->
-    <div class="absolute inset-0 z-0 overflow-hidden">
-      <div class="vessel-loop-track reverse-drift" aria-hidden="true">
-        <div class="vessel-tile showcase-vessel-tile"></div>
-        <div class="vessel-tile vessel-tile-mirrored showcase-vessel-tile"></div>
-        <div class="vessel-tile showcase-vessel-tile"></div>
-        <div class="vessel-tile vessel-tile-mirrored showcase-vessel-tile"></div>
-      </div>
-      <!-- Dedicated Showcase Bloodstream Simulation Canvas -->
-      <canvas id="showcase-bloodstream-canvas" class="absolute inset-0 w-full h-full pointer-events-none"></canvas>
-    </div>
-
-    <!-- Crimson Color Grade Overlay -->
-    <div
-      id="showcase-color-grade"
-      class="absolute inset-0 z-0 pointer-events-none transition-all duration-700"
-      style="background: radial-gradient(circle at 75% 35%, rgba(217, 107, 125, 0.24) 0%, rgba(158, 27, 50, 0.36) 34%, rgba(84, 11, 22, 0.64) 62%, #060102 100%); mix-blend-mode: color;"
-    ></div>
-    <div
-      id="showcase-color-multiply"
-      class="absolute inset-0 z-0 pointer-events-none transition-opacity duration-700"
-      style="background: linear-gradient(110deg, rgba(46, 2, 9, 0.68) 0%, rgba(84, 11, 22, 0.28) 55%, rgba(46, 2, 9, 0.18) 100%); mix-blend-mode: multiply;"
-    ></div>
-
-    <!-- Seamless Abyssal Vignette -->
-    <div
-      class="absolute inset-0 z-0 pointer-events-none"
-      style="background: var(--grad-showcase-vignette);"
-    ></div>
-
-    <!-- Diagonal Volumetric Light Shaft from Top-Right Corner -->
-    <div
-      class="volumetric-ray absolute -top-24 -right-12 w-[48rem] h-[68rem] z-0 pointer-events-none blur-2xl"
-      style="background: linear-gradient(215deg, rgba(247, 230, 233, 0.24) 0%, rgba(217, 107, 125, 0.16) 28%, rgba(158, 27, 50, 0.06) 54%, transparent 76%);"
-    ></div>
-
-    <!-- Foreground Content -->
-    <div class="relative z-10 max-w-7xl mx-auto px-5 sm:px-8 lg:px-12 w-full">
-      <div class="max-w-lg">
-        <p id="showcase-overline" class="text-[11px] font-medium uppercase tracking-[0.28em] text-plasmaRose/85">
-          SPECIMEN TELEMETRY 01
-        </p>
-
-        <h2 id="showcase-title" class="mt-4 text-4xl sm:text-5xl lg:text-6xl font-light tracking-tight leading-[1.1] text-cellularMist">
-          Viral Capsids &amp;<br />
-          Spike <span class="serif-crimson-accent font-normal text-[2.85rem] sm:text-[3.75rem] lg:text-[4.35rem]">Dynamics</span>
-        </h2>
-
-        <p id="showcase-desc" class="mt-5 text-sm sm:text-base text-cellularMist/70 leading-relaxed font-light">
-          Enveloped virions ringed with trimeric glycoprotein spikes rotate through laminar arterial plasma, scanning endothelial receptor sites.
-        </p>
-
-        <div class="mt-8">
-          <a href="#palette" class="inline-flex items-center gap-3 text-xs sm:text-sm font-medium text-cellularMist pb-1.5 border-b border-plasmaRose/45 hover:border-cellularMist hover:text-plasmaRose transition-colors">
-            <span>Inspect Chromatic &amp; Flow Controls</span>
-            <span>&rarr;</span>
-          </a>
-        </div>
-
-        <!-- Carousel Controls: Prev / Next Circle Buttons + 01 / 03 Counter -->
-        <div class="mt-14 flex items-center gap-5">
-          <div class="flex items-center gap-2.5">
-            <button
-              id="prev-slide-btn"
-              type="button"
-              aria-label="Previous Specimen Telemetry"
-              class="w-10 h-10 rounded-full pill-cta-crimson flex items-center justify-center text-cellularMist/80 hover:text-cellularMist"
-            >
-              &larr;
-            </button>
-            <button
-              id="next-slide-btn"
-              type="button"
-              aria-label="Next Specimen Telemetry"
-              class="w-10 h-10 rounded-full pill-cta-crimson flex items-center justify-center text-cellularMist/80 hover:text-cellularMist"
-            >
-              &rarr;
-            </button>
-          </div>
-          <span id="slide-counter" class="font-mono text-xs tracking-widest text-cellularMist/60">
-            01 / 03
-          </span>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ==================== CHROMATIC ARCHITECTURE & PATHOGEN CONTROLS ==================== -->
-  <section id="palette" class="relative bg-abyssalVein py-24 border-t border-plasmaRose/[0.10]">
-    <div class="max-w-7xl mx-auto px-5 sm:px-8 lg:px-12">
-      <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-8 mb-12">
-        <div>
-          <p class="text-[11px] font-medium uppercase tracking-[0.28em] text-plasmaRose/85">
-            CHROMATIC ARCHITECTURE &amp; FLOW CONTROLS
-          </p>
-          <h2 class="mt-3 text-3xl sm:text-4xl font-light text-cellularMist">
-            Arterial <span class="serif-crimson-accent text-4xl sm:text-5xl">Hematology</span> Palette
-          </h2>
-          <p class="mt-2 text-xs sm:text-sm text-cellularMist/60 max-w-lg font-light">
-            Switch between Deep Arterial Crimson Grade and Vivid Microscopy Stain, modulate pathogen density in real time, or click any swatch to copy its HEX code.
-          </p>
-        </div>
-
-        <!-- Interactive Grade, Flow Pause & Pathogen Load Controls -->
-        <div class="flex flex-col sm:flex-row flex-wrap items-start sm:items-center gap-3.5">
-          <!-- Grade Toggle -->
-          <div class="inline-flex items-center p-1 rounded-full bg-deepArterial/85 border border-plasmaRose/25 backdrop-blur-md">
-            <button
-              id="btn-crimson-grade"
-              type="button"
-              class="px-4 py-1.5 rounded-full text-xs font-medium bg-gradient-to-r from-clotShadow to-oxyHemoglobin text-cellularMist shadow transition-all"
-            >
-              Deep Arterial Crimson Grade
-            </button>
-            <button
-              id="btn-stain-grade"
-              type="button"
-              class="px-4 py-1.5 rounded-full text-xs font-medium text-cellularMist/65 hover:text-cellularMist transition-all"
-            >
-              Vivid Microscopy Stain
-            </button>
-          </div>
-
-          <!-- Pause / Resume Flow -->
-          <button
-            id="btn-toggle-flow"
-            type="button"
-            class="inline-flex items-center gap-2 px-4 py-2 rounded-full pill-cta-crimson text-xs font-mono text-plasmaRose hover:text-cellularMist"
-          >
-            <span id="flow-status-dot" class="w-2 h-2 rounded-full bg-plasmaRose animate-pulse"></span>
-            <span id="flow-status-text">Pause Flow</span>
-          </button>
-
-          <!-- Pathogen Load Slider / Boost -->
-          <div class="inline-flex items-center gap-3 px-4 py-2 rounded-full pill-cta-crimson">
-            <label for="pathogen-load-slider" class="text-[11px] font-mono text-cellularMist/80 whitespace-nowrap">
-              Pathogen Load: <span id="pathogen-load-label" class="text-plasmaRose font-medium">Normal (1.0x)</span>
-            </label>
-            <input
-              id="pathogen-load-slider"
-              type="range"
-              min="1"
-              max="3"
-              step="1"
-              value="1"
-              class="crimson-slider w-24"
-            />
-          </div>
-        </div>
-      </div>
-
-      <!-- 5 Hematology Palette Swatches Strip -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-        <!-- Deep Arterial Crimson -->
-        <button
-          type="button"
-          data-copy="#2E0209"
-          data-label="Deep Arterial Crimson (#2E0209)"
-          class="copy-chip group text-left rounded-2xl p-5 border border-plasmaRose/20 hover:border-plasmaRose/65 transition-all duration-300 flex flex-col justify-between h-36"
-          style="background: linear-gradient(145deg, #2E0209 0%, #190105 100%);"
-        >
-          <div class="flex items-center justify-between w-full">
-            <span class="font-mono text-xs text-plasmaRose">#2E0209</span>
-            <span class="text-[11px] font-mono text-cellularMist/50 group-hover:text-cellularMist">Copy</span>
-          </div>
-          <div>
-            <p class="font-serif italic text-xl text-cellularMist">Deep Arterial</p>
-            <p class="font-mono text-[10px] text-plasmaRose/75 mt-0.5">RGB 46, 2, 9</p>
-          </div>
-        </button>
-
-        <!-- Clot Shadow -->
-        <button
-          type="button"
-          data-copy="#540B16"
-          data-label="Clot Shadow (#540B16)"
-          class="copy-chip group text-left rounded-2xl p-5 border border-plasmaRose/20 hover:border-plasmaRose/65 transition-all duration-300 flex flex-col justify-between h-36"
-          style="background: linear-gradient(145deg, #540B16 0%, #38060E 100%);"
-        >
-          <div class="flex items-center justify-between w-full">
-            <span class="font-mono text-xs text-cellularMist">#540B16</span>
-            <span class="text-[11px] font-mono text-cellularMist/60 group-hover:text-cellularMist">Copy</span>
-          </div>
-          <div>
-            <p class="font-serif italic text-xl text-cellularMist">Clot Shadow</p>
-            <p class="font-mono text-[10px] text-cellularMist/75 mt-0.5">RGB 84, 11, 22</p>
-          </div>
-        </button>
-
-        <!-- Oxy-Hemoglobin -->
-        <button
-          type="button"
-          data-copy="#9E1B32"
-          data-label="Oxy-Hemoglobin (#9E1B32)"
-          class="copy-chip group text-left rounded-2xl p-5 border border-cellularMist/20 hover:border-cellularMist/70 transition-all duration-300 flex flex-col justify-between h-36"
-          style="background: linear-gradient(145deg, #9E1B32 0%, #731122 100%);"
-        >
-          <div class="flex items-center justify-between w-full">
-            <span class="font-mono text-xs text-cellularMist">#9E1B32</span>
-            <span class="text-[11px] font-mono text-cellularMist/75 group-hover:text-cellularMist">Copy</span>
-          </div>
-          <div>
-            <p class="font-serif italic text-xl text-cellularMist">Oxy-Hemoglobin</p>
-            <p class="font-mono text-[10px] text-cellularMist/85 mt-0.5">RGB 158, 27, 50</p>
-          </div>
-        </button>
-
-        <!-- Plasma Rose -->
-        <button
-          type="button"
-          data-copy="#D96B7D"
-          data-label="Plasma Rose (#D96B7D)"
-          class="copy-chip group text-left rounded-2xl p-5 border border-cellularMist/30 hover:border-cellularMist transition-all duration-300 flex flex-col justify-between h-36"
-          style="background: linear-gradient(145deg, #D96B7D 0%, #b85061 100%);"
-        >
-          <div class="flex items-center justify-between w-full">
-            <span class="font-mono text-xs text-abyssalVein font-medium">#D96B7D</span>
-            <span class="text-[11px] font-mono text-abyssalVein/70 group-hover:text-abyssalVein">Copy</span>
-          </div>
-          <div>
-            <p class="font-serif italic text-xl text-abyssalVein font-semibold">Plasma Rose</p>
-            <p class="font-mono text-[10px] text-abyssalVein/80 mt-0.5">RGB 217, 107, 125</p>
-          </div>
-        </button>
-
-        <!-- Cellular Mist -->
-        <button
-          type="button"
-          data-copy="#F7E6E9"
-          data-label="Cellular Mist (#F7E6E9)"
-          class="copy-chip group text-left rounded-2xl p-5 border border-cellularMist/50 hover:border-white transition-all duration-300 flex flex-col justify-between h-36"
-          style="background: linear-gradient(145deg, #F7E6E9 0%, #e6ccd1 100%);"
-        >
-          <div class="flex items-center justify-between w-full">
-            <span class="font-mono text-xs text-deepArterial font-medium">#F7E6E9</span>
-            <span class="text-[11px] font-mono text-deepArterial/70 group-hover:text-deepArterial">Copy</span>
-          </div>
-          <div>
-            <p class="font-serif italic text-xl text-deepArterial font-semibold">Cellular Mist</p>
-            <p class="font-mono text-[10px] text-deepArterial/80 mt-0.5">RGB 247, 230, 233</p>
-          </div>
-        </button>
-      </div>
-
-      <!-- Seamless Bloodstream Gradient & Keyframe Bar -->
-      <div
-        class="mt-6 rounded-2xl p-6 sm:px-8 border border-plasmaRose/20 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
-        style="background: linear-gradient(90deg, #060102 0%, #2E0209 25%, #540B16 52%, #9E1B32 78%, #D96B7D 100%);"
-      >
-        <div>
-          <p class="text-[10px] font-mono uppercase tracking-[0.24em] text-plasmaRose">Seamless Vessel Panorama + Arterial Hemodynamic Gradient</p>
-          <p class="font-mono text-xs text-cellularMist/90 mt-1">
-            animation: seamlessBloodDrift 38s linear infinite; /* translate3d(0,0,0) -&gt; translate3d(-50%,0,0) */
-          </p>
-        </div>
-        <button
-          type="button"
-          data-copy="animation: seamlessBloodDrift 38s linear infinite; background: linear-gradient(135deg, #060102 0%, #2E0209 32%, #540B16 58%, #9E1B32 82%, #D96B7D 100%);"
-          data-label="Seamless Bloodstream CSS"
-          class="copy-chip self-start sm:self-center px-4 py-2 rounded-full bg-abyssalVein/80 border border-cellularMist/30 text-xs font-mono text-cellularMist hover:bg-abyssalVein transition-colors"
-        >
-          Copy Stream CSS
-        </button>
-      </div>
-    </div>
-  </section>
-
-  <!-- ==================== CLOSING CTA ("READY TO VISUALIZE CELLULAR DYNAMICS?") ==================== -->
-  <section id="contact" class="relative bg-abyssalVein py-28 sm:py-36 border-t border-plasmaRose/[0.10] overflow-hidden">
-    <div
-      class="absolute inset-0 pointer-events-none"
-      style="background: radial-gradient(circle at 50% 50%, rgba(84, 11, 22, 0.28) 0%, rgba(46, 2, 9, 0.10) 42%, transparent 72%);"
-    ></div>
-
-    <div class="relative z-10 max-w-4xl mx-auto px-5 sm:px-8 text-center">
-      <p class="text-[11px] font-medium uppercase tracking-[0.28em] text-plasmaRose/80">
-        BIOMEDICAL SIMULATION STUDIO
-      </p>
-
-      <h2 class="mt-4 text-3xl sm:text-5xl font-light tracking-tight text-cellularMist">
-        Ready to visualize <span class="serif-crimson-accent font-normal text-4xl sm:text-6xl">cellular dynamics?</span>
-      </h2>
-
-      <div class="mt-9 flex justify-center">
-        <button
-          id="open-sample-btn"
-          type="button"
-          class="inline-flex items-center gap-4 pl-6 pr-2.5 py-2.5 rounded-full pill-cta-crimson text-xs sm:text-sm font-medium text-cellularMist group"
-        >
-          <span>Submit Specimen Request</span>
-          <span class="w-8 h-8 rounded-full bg-gradient-to-br from-plasmaRose to-oxyHemoglobin text-abyssalVein flex items-center justify-center group-hover:scale-105 transition-transform">
-            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M7 17L17 7M7 7h10v10" />
-            </svg>
-          </span>
-        </button>
-      </div>
-
-      <!-- Inline Expandable Sample Submission Form -->
-      <form id="sample-inquiry-form" class="hidden mt-10 max-w-md mx-auto text-left p-6 rounded-3xl pill-cta-crimson space-y-4">
-        <div>
-          <label for="lab-email" class="block text-[11px] uppercase tracking-widest text-plasmaRose mb-1.5">Researcher / Lab Email</label>
-          <input
-            id="lab-email"
-            type="email"
-            required
-            placeholder="dr.vance@biolab.org"
-            class="w-full px-4 py-3 rounded-xl bg-abyssalVein/80 border border-plasmaRose/25 text-sm text-cellularMist placeholder-cellularMist/35 focus:outline-none focus:border-plasmaRose"
-          />
-        </div>
-        <div>
-          <label for="specimen-note" class="block text-[11px] uppercase tracking-widest text-plasmaRose mb-1.5">Target Pathogen or Assay</label>
-          <input
-            id="specimen-note"
-            type="text"
-            required
-            placeholder="Viral spike assay, flagellated bacilli motility, or whole-blood rheology..."
-            class="w-full px-4 py-3 rounded-xl bg-abyssalVein/80 border border-plasmaRose/25 text-sm text-cellularMist placeholder-cellularMist/35 focus:outline-none focus:border-plasmaRose"
-          />
-        </div>
-        <button type="submit" class="w-full py-3 rounded-xl bg-gradient-to-r from-clotShadow via-oxyHemoglobin to-plasmaRose text-cellularMist font-medium text-xs uppercase tracking-widest hover:opacity-95 transition-opacity">
-          Transmit Sample Protocol
-        </button>
-      </form>
-    </div>
-  </section>
-
+    </section>
   </main>
 
-  <!-- ==================== 5-COLUMN DARK FOOTER ==================== -->
+  <!-- ==================== FOOTER ==================== -->
   <footer class="bg-abyssalVein border-t border-plasmaRose/[0.10] py-16 text-xs">
-    <div class="max-w-7xl mx-auto px-5 sm:px-8 lg:px-12">
-      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-10">
-        <!-- Brand Column -->
-        <div class="col-span-2">
-          <a href="#" class="flex items-center gap-3">
-            <svg class="w-4 h-4 text-plasmaRose" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
-              <circle cx="12" cy="12" r="5" />
-              <path stroke-linecap="round" d="M12 2v4M12 18v4M2 12h4M18 12h4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M19.07 4.93l-2.83 2.83M7.76 16.24l-2.83 2.83" />
-            </svg>
-            <span class="font-medium tracking-[0.34em] text-cellularMist uppercase">AEDISIGHT</span>
-          </a>
-          <p class="mt-4 text-cellularMist/45 leading-relaxed max-w-xs font-light">
-            A cellular biotech and hematology visualization studio illuminating microscopic pathogens, erythrocytes, and immune dynamics in real time.
-          </p>
-        </div>
+    <div class="max-w-7xl mx-auto px-5 sm:px-8 lg:px-12 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
+      <div>
+        <a href="#" class="flex items-center gap-3">
+          <svg class="w-4 h-4 text-plasmaRose" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+            <circle cx="12" cy="12" r="5" />
+            <path stroke-linecap="round" d="M12 2v4M12 18v4M2 12h4M18 12h4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M19.07 4.93l-2.83 2.83M7.76 16.24l-2.83 2.83" />
+          </svg>
+          <span class="font-medium tracking-[0.34em] text-cellularMist uppercase">AEDISIGHT</span>
+        </a>
+        <p class="mt-4 text-cellularMist/45 leading-relaxed max-w-md font-light">
+          Urban dengue outbreak early-warning system forecasting ward risk tiers from lagged weather metrics and neighborhood vulnerability[cite: 2, 3].
+        </p>
+      </div>
 
-        <!-- Laboratory -->
-        <div>
-          <h3 class="text-cellularMist font-medium mb-4">Laboratory</h3>
-          <ul class="space-y-2.5 text-cellularMist/45">
-            <li><a href="#research" class="hover:text-plasmaRose transition-colors">About</a></li>
-            <li><a href="#contact" class="hover:text-plasmaRose transition-colors">Fellowships</a></li>
-            <li><a href="#research" class="hover:text-plasmaRose transition-colors">Principal Investigators</a></li>
-            <li><a href="#pathogens" class="hover:text-plasmaRose transition-colors">Publications</a></li>
-          </ul>
-        </div>
-
-        <!-- Disciplines -->
-        <div>
-          <h3 class="text-cellularMist font-medium mb-4">Disciplines</h3>
-          <ul class="space-y-2.5 text-cellularMist/45">
-            <li><a href="#research" class="hover:text-plasmaRose transition-colors">Virology</a></li>
-            <li><a href="#research" class="hover:text-plasmaRose transition-colors">Bacteriology</a></li>
-            <li><a href="#research" class="hover:text-plasmaRose transition-colors">Hematology</a></li>
-            <li><a href="#research" class="hover:text-plasmaRose transition-colors">Immunology</a></li>
-          </ul>
-        </div>
-
-        <!-- Telemetry -->
-        <div>
-          <h3 class="text-cellularMist font-medium mb-4">Telemetry</h3>
-          <ul class="space-y-2.5 text-cellularMist/45">
-            <li><a href="#palette" class="hover:text-plasmaRose transition-colors">Chromatic System</a></li>
-            <li><a href="#pathogens" class="hover:text-plasmaRose transition-colors">Pathogen Atlas</a></li>
-            <li><a href="#pathogens" class="hover:text-plasmaRose transition-colors">Hemodynamics</a></li>
-            <li><a href="#palette" class="hover:text-plasmaRose transition-colors">Slide Calibration</a></li>
-          </ul>
-        </div>
-
-        <!-- Connect -->
-        <div>
-          <h3 class="text-cellularMist font-medium mb-4">Connect</h3>
-          <ul class="space-y-2.5 text-cellularMist/45">
-            <li><a href="#contact" class="hover:text-plasmaRose transition-colors">BioRxiv</a></li>
-            <li><a href="#contact" class="hover:text-plasmaRose transition-colors">LinkedIn</a></li>
-            <li><a href="#contact" class="hover:text-plasmaRose transition-colors">PubMed</a></li>
-            <li><a href="#contact" class="hover:text-plasmaRose transition-colors">ResearchGate</a></li>
-          </ul>
-        </div>
+      <div class="flex items-center gap-6 text-cellularMist/50">
+        <a href="#pipeline" class="hover:text-plasmaRose transition-colors">Pipeline</a>
+        <a href="#scenarios" class="hover:text-plasmaRose transition-colors">Scenarios</a>
+        <a href="#controls" class="hover:text-plasmaRose transition-colors">Controls</a>
+        <a href="/login" class="hover:text-plasmaRose transition-colors">Login</a>
       </div>
     </div>
   </footer>
 
-  <!-- ==================== NON-INTRUSIVE TOAST NOTIFICATION ==================== -->
-  <div
-    id="toast"
-    role="status"
-    aria-live="polite"
-    class="fixed bottom-6 right-6 z-50 translate-y-20 opacity-0 pointer-events-none transition-all duration-300 flex items-center gap-3 px-5 py-3 rounded-full bg-deepArterial/95 border border-plasmaRose/45 text-cellularMist shadow-2xl backdrop-blur-md"
-  >
-    <span class="w-2.5 h-2.5 rounded-full bg-plasmaRose"></span>
-    <span id="toast-msg" class="text-xs font-mono">Copied to clipboard</span>
-  </div>
-
-  <!-- ==================== PROCEDURAL VESSEL TEXTURE + REAL-TIME 60FPS BLOODSTREAM ENGINE ==================== -->
+  <!-- ==================== PROCEDURAL VESSEL TEXTURE + REAL-TIME 60FPS CANVAS ENGINE ==================== -->
   <script>
-    // 1. Safe Clipboard Helper & Toast Feedback (Works inside sandboxed iframes without alert())
-    const toastEl = document.getElementById('toast');
-    const toastMsgEl = document.getElementById('toast-msg');
-    let toastTimeout = null;
-
-    function showToast(message) {
-      if (!toastEl || !toastMsgEl) return;
-      toastMsgEl.textContent = message;
-      toastEl.classList.remove('translate-y-20', 'opacity-0');
-      toastEl.classList.add('translate-y-0', 'opacity-100');
-      clearTimeout(toastTimeout);
-      toastTimeout = setTimeout(() => {
-        toastEl.classList.add('translate-y-20', 'opacity-0');
-        toastEl.classList.remove('translate-y-0', 'opacity-100');
-      }, 2600);
-    }
-
-    function copyTextSafely(text, label) {
-      const textarea = document.createElement('textarea');
-      textarea.value = text;
-      textarea.style.position = 'fixed';
-      textarea.style.opacity = '0';
-      document.body.appendChild(textarea);
-      textarea.select();
-      try {
-        document.execCommand('copy');
-        showToast(`Copied ${label}`);
-      } catch (err) {
-        showToast(`Selected ${label}`);
-      }
-      document.body.removeChild(textarea);
-    }
-
-    document.querySelectorAll('.copy-chip').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        const value = btn.getAttribute('data-copy');
-        const label = btn.getAttribute('data-label') || value;
-        copyTextSafely(value, label);
-      });
-    });
-
-    // 2. Mobile Navigation Drawer Toggle
     const mobileBtn = document.getElementById('mobile-menu-btn');
     const mobileMenu = document.getElementById('mobile-menu');
     const iconOpen = document.getElementById('icon-open');
@@ -778,7 +451,6 @@
       });
     }
 
-    // 3. Procedural Arterial Vessel Wall & Endothelial Plasma Texture Generator
     function generateArterialVesselTexture(variant = 0) {
       const canvas = document.createElement('canvas');
       canvas.width = 1600;
@@ -787,7 +459,6 @@
       const w = canvas.width;
       const h = canvas.height;
 
-      // Deep lumen plasma gradient
       const lumenGrad = ctx.createRadialGradient(w * 0.55, h * 0.5, 40, w * 0.5, h * 0.5, w * 0.85);
       if (variant === 0) {
         lumenGrad.addColorStop(0, '#7a1224');
@@ -805,7 +476,6 @@
       ctx.fillStyle = lumenGrad;
       ctx.fillRect(0, 0, w, h);
 
-      // Organic endothelial vessel wall ridges along top and bottom borders
       ctx.save();
       for (let i = 0; i < 24; i++) {
         const rx = (i * 75) % w;
@@ -832,7 +502,6 @@
       }
       ctx.restore();
 
-      // Subtle laminar plasma flow streaks
       ctx.save();
       for (let s = 0; s < 32; s++) {
         const sy = (s / 32) * h;
@@ -851,7 +520,6 @@
       }
       ctx.restore();
 
-      // Soft out-of-focus background erythrocytes baked into deep lumen depth
       for (let c = 0; c < 18; c++) {
         const cx = ((c * 197 + variant * 80) % (w - 100)) + 50;
         const cy = ((c * 131 + variant * 60) % (h - 120)) + 60;
@@ -884,30 +552,23 @@
     applyVesselTextureToTiles('.hero-vessel-tile', vesselTextures[0]);
     applyVesselTextureToTiles('.showcase-vessel-tile', vesselTextures[0]);
 
-    // Allow user to upload their own microscopy slide image into the seamless vessel loop
-    const customSlideInput = document.getElementById('custom-slide-input');
-    if (customSlideInput) {
-      customSlideInput.addEventListener('change', (event) => {
-        const file = event.target.files && event.target.files[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          const customUrl = e.target.result;
-          applyVesselTextureToTiles('.hero-vessel-tile', customUrl);
-          applyVesselTextureToTiles('.showcase-vessel-tile', customUrl);
-          showToast(`Loaded "${file.name}" into vessel stream`);
-        };
-        reader.readAsDataURL(file);
-      });
-    }
-
-    // 4. Global Simulation State (Flow Pause, Pathogen Load Multiplier & Stain Mode)
     let isFlowPaused = false;
-    let pathogenMultiplier = 1; // 1 = Normal, 2 = Elevated, 3 = High Viral Load
-    let isVividStain = false;
+    let pathogenMultiplier = 1; // 1 = Low (sparse), 2 = High (moderate-high), 3 = Critical (dense)
     const bloodstreamControllers = [];
 
-    // 5. Real-Time 60fps Bloodstream Canvas Engine (Erythrocytes, Spiked Virions, Rod Bacilli, Leukocytes, Platelets)
+    // Scale counts from low baseline at level 1 up to dense surge at level 3
+    function getLoadScale() {
+      if (pathogenMultiplier <= 1) return 0.32;
+      if (pathogenMultiplier === 2) return 1.05;
+      return 2.15;
+    }
+
+    function getLarvaeScale() {
+      if (pathogenMultiplier <= 1) return 0.25;
+      if (pathogenMultiplier === 2) return 1.15;
+      return 2.5;
+    }
+
     function initBloodstreamCanvas(canvasId, initialFocusMode = 'balanced') {
       const canvas = document.getElementById(canvasId);
       if (!canvas) return null;
@@ -917,13 +578,12 @@
       let focusMode = initialFocusMode;
 
       let rbcs = [];
-      let virions = [];
       let bacilli = [];
       let leukocytes = [];
       let platelets = [];
 
       function createRBC(spawnAtRight = false) {
-        const depth = 0.35 + Math.random() * 0.65; // 0.35 = far background, 1.0 = sharp foreground
+        const depth = 0.35 + Math.random() * 0.65;
         return {
           x: spawnAtRight ? width + 60 + Math.random() * 140 : Math.random() * (width + 120),
           y: Math.random() * height,
@@ -933,22 +593,6 @@
           spin: (Math.random() - 0.5) * 0.015,
           vx: -(0.75 + Math.random() * 1.35) * depth,
           vy: (Math.random() - 0.5) * 0.25,
-          phase: Math.random() * Math.PI * 2,
-          depth,
-        };
-      }
-
-      function createVirion(spawnAtRight = false) {
-        const depth = 0.55 + Math.random() * 0.45;
-        return {
-          x: spawnAtRight ? width + 50 + Math.random() * 180 : width * 0.15 + Math.random() * (width * 0.9),
-          y: Math.random() * height,
-          r: (11 + Math.random() * 11) * depth,
-          spikes: 12 + Math.floor(Math.random() * 5),
-          angle: Math.random() * Math.PI * 2,
-          spin: (Math.random() > 0.5 ? 1 : -1) * (0.008 + Math.random() * 0.014),
-          vx: -(0.55 + Math.random() * 0.95) * depth,
-          vy: (Math.random() - 0.5) * 0.32,
           phase: Math.random() * Math.PI * 2,
           depth,
         };
@@ -996,15 +640,15 @@
 
       function populateEntities() {
         const areaScale = Math.max(0.65, Math.min(1.4, (width * height) / (1280 * 720)));
-        const rbcBoost = focusMode === 'rheology' ? 1.45 : 1.0;
-        const virionBoost = (focusMode === 'virology' ? 1.6 : 1.0) * pathogenMultiplier;
-        const bacilliBoost = (focusMode === 'bacteriology' ? 1.7 : 1.0) * pathogenMultiplier;
+        const loadScale = getLoadScale();
+        const larvaeScale = getLarvaeScale();
+        const rbcBoost = focusMode === 'rheology' ? 1.35 : 1.0;
+        const bacilliBoost = focusMode === 'bacteriology' ? 1.45 : 1.0;
 
-        rbcs = Array.from({ length: Math.round(28 * areaScale * rbcBoost) }, () => createRBC(false));
-        virions = Array.from({ length: Math.round(12 * areaScale * virionBoost) }, () => createVirion(false));
-        bacilli = Array.from({ length: Math.round(10 * areaScale * bacilliBoost) }, () => createBacillus(false));
-        leukocytes = Array.from({ length: Math.max(3, Math.round(4 * areaScale)) }, () => createLeukocyte(false));
-        platelets = Array.from({ length: Math.round(46 * areaScale) }, () => createPlatelet());
+        rbcs = Array.from({ length: Math.max(4, Math.round(24 * areaScale * loadScale * rbcBoost)) }, () => createRBC(false));
+        bacilli = Array.from({ length: Math.max(2, Math.round(12 * areaScale * larvaeScale * bacilliBoost)) }, () => createBacillus(false));
+        leukocytes = Array.from({ length: Math.max(1, Math.round(4 * areaScale * Math.min(1.6, loadScale))) }, () => createLeukocyte(false));
+        platelets = Array.from({ length: Math.max(8, Math.round(42 * areaScale * Math.min(1.8, loadScale))) }, () => createPlatelet());
       }
 
       function resize() {
@@ -1014,45 +658,28 @@
         populateEntities();
       }
 
-      // Draw Biconcave Red Blood Cell (Erythrocyte)
       function drawErythrocyte(cell) {
         ctx.save();
         ctx.translate(cell.x, cell.y);
         ctx.rotate(cell.angle);
         ctx.globalAlpha = 0.35 + cell.depth * 0.58;
 
-        // Outer crimson disc
-        const outerGrad = ctx.createRadialGradient(
-          -cell.r * 0.25,
-          -cell.r * 0.2,
-          cell.r * 0.1,
-          0,
-          0,
-          cell.r
-        );
-        if (isVividStain) {
-          outerGrad.addColorStop(0, '#ff6b8b');
-          outerGrad.addColorStop(0.55, '#d91e48');
-          outerGrad.addColorStop(1, '#6e071d');
-        } else {
-          outerGrad.addColorStop(0, '#D96B7D');
-          outerGrad.addColorStop(0.52, '#9E1B32');
-          outerGrad.addColorStop(1, '#540B16');
-        }
+        const outerGrad = ctx.createRadialGradient(-cell.r * 0.25, -cell.r * 0.2, cell.r * 0.1, 0, 0, cell.r);
+        outerGrad.addColorStop(0, '#D96B7D');
+        outerGrad.addColorStop(0.52, '#9E1B32');
+        outerGrad.addColorStop(1, '#540B16');
 
         ctx.fillStyle = outerGrad;
         ctx.beginPath();
         ctx.ellipse(0, 0, cell.r, cell.r * cell.tilt, 0, 0, Math.PI * 2);
         ctx.fill();
 
-        // Specular rim highlight
         ctx.strokeStyle = 'rgba(247, 230, 233, 0.32)';
         ctx.lineWidth = Math.max(0.8, 1.3 * cell.depth);
         ctx.beginPath();
         ctx.ellipse(0, 0, cell.r * 0.92, cell.r * cell.tilt * 0.92, 0, -Math.PI * 0.75, -Math.PI * 0.15);
         ctx.stroke();
 
-        // Dark biconcave central dimple
         const dimpleGrad = ctx.createRadialGradient(0, 0, 1, 0, 0, cell.r * 0.52);
         dimpleGrad.addColorStop(0, 'rgba(6, 1, 2, 0.72)');
         dimpleGrad.addColorStop(0.65, 'rgba(46, 2, 9, 0.45)');
@@ -1065,74 +692,6 @@
         ctx.restore();
       }
 
-      // Draw Spiked Coronavirus / Enveloped Virion
-      function drawVirion(v, time) {
-        ctx.save();
-        ctx.translate(v.x, v.y);
-        ctx.rotate(v.angle);
-        const pulse = 1 + 0.05 * Math.sin(time * 0.003 + v.phase);
-        ctx.scale(pulse, pulse);
-        ctx.globalAlpha = 0.48 + v.depth * 0.5;
-
-        // Outer ambient bio-halo
-        const halo = ctx.createRadialGradient(0, 0, v.r * 0.5, 0, 0, v.r * 2.1);
-        halo.addColorStop(0, isVividStain ? 'rgba(255, 190, 205, 0.28)' : 'rgba(217, 107, 125, 0.22)');
-        halo.addColorStop(1, 'rgba(158, 27, 50, 0)');
-        ctx.fillStyle = halo;
-        ctx.beginPath();
-        ctx.arc(0, 0, v.r * 2.1, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Club-shaped trimeric Spike Glycoproteins around perimeter
-        for (let i = 0; i < v.spikes; i++) {
-          const theta = (i / v.spikes) * Math.PI * 2;
-          const sx = Math.cos(theta);
-          const sy = Math.sin(theta);
-          const innerR = v.r * 0.92;
-          const outerR = v.r * 1.48;
-
-          // Spike stalk
-          ctx.strokeStyle = isVividStain ? '#ffd6e0' : '#D96B7D';
-          ctx.lineWidth = Math.max(1.1, 1.8 * v.depth);
-          ctx.beginPath();
-          ctx.moveTo(sx * innerR, sy * innerR);
-          ctx.lineTo(sx * outerR, sy * outerR);
-          ctx.stroke();
-
-          // Spike crown bulb
-          ctx.fillStyle = isVividStain ? '#ffffff' : '#F7E6E9';
-          ctx.beginPath();
-          ctx.arc(sx * outerR, sy * outerR, Math.max(1.5, 2.5 * v.depth), 0, Math.PI * 2);
-          ctx.fill();
-        }
-
-        // Viral Envelope Capsid Sphere
-        const capsidGrad = ctx.createRadialGradient(-v.r * 0.28, -v.r * 0.28, 1, 0, 0, v.r);
-        if (isVividStain) {
-          capsidGrad.addColorStop(0, '#ffe3ea');
-          capsidGrad.addColorStop(0.5, '#d9486c');
-          capsidGrad.addColorStop(1, '#540B16');
-        } else {
-          capsidGrad.addColorStop(0, '#F7E6E9');
-          capsidGrad.addColorStop(0.45, '#9E1B32');
-          capsidGrad.addColorStop(1, '#2E0209');
-        }
-        ctx.fillStyle = capsidGrad;
-        ctx.beginPath();
-        ctx.arc(0, 0, v.r, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Inner RNA helical core hint
-        ctx.strokeStyle = 'rgba(247, 230, 233, 0.35)';
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.arc(0, 0, v.r * 0.52, 0.2, Math.PI * 1.45);
-        ctx.stroke();
-
-        ctx.restore();
-      }
-
-      // Draw Rod-Shaped Bacillus Bacterium with Undulating Flagella Tails
       function drawBacillus(b, time) {
         ctx.save();
         ctx.translate(b.x, b.y);
@@ -1140,9 +699,8 @@
         ctx.rotate(b.angle + swimPitch);
         ctx.globalAlpha = 0.45 + b.depth * 0.5;
 
-        // Undulating whip-like flagella tails at rear (+x in local rotated space since angle ~ PI)
         for (let f = -1; f <= 1; f += 2) {
-          ctx.strokeStyle = isVividStain ? 'rgba(255, 225, 232, 0.65)' : 'rgba(247, 230, 233, 0.52)';
+          ctx.strokeStyle = 'rgba(247, 230, 233, 0.52)';
           ctx.lineWidth = Math.max(0.9, 1.2 * b.depth);
           ctx.beginPath();
           const startX = -b.len * 0.48;
@@ -1161,17 +719,10 @@
           ctx.stroke();
         }
 
-        // Capsule Rod Body
         const bodyGrad = ctx.createLinearGradient(0, -b.thick, 0, b.thick);
-        if (isVividStain) {
-          bodyGrad.addColorStop(0, '#ffd1dc');
-          bodyGrad.addColorStop(0.5, '#e05677');
-          bodyGrad.addColorStop(1, '#6e0d23');
-        } else {
-          bodyGrad.addColorStop(0, '#F7E6E9');
-          bodyGrad.addColorStop(0.45, '#D96B7D');
-          bodyGrad.addColorStop(1, '#540B16');
-        }
+        bodyGrad.addColorStop(0, '#F7E6E9');
+        bodyGrad.addColorStop(0.45, '#D96B7D');
+        bodyGrad.addColorStop(1, '#540B16');
 
         ctx.fillStyle = bodyGrad;
         ctx.beginPath();
@@ -1182,7 +733,6 @@
         }
         ctx.fill();
 
-        // Outer cell wall membrane glow
         ctx.strokeStyle = 'rgba(247, 230, 233, 0.48)';
         ctx.lineWidth = 1;
         ctx.stroke();
@@ -1190,7 +740,6 @@
         ctx.restore();
       }
 
-      // Draw Translucent Amoeboid Leukocyte (White Blood Cell)
       function drawLeukocyte(wbc, time) {
         ctx.save();
         ctx.translate(wbc.x, wbc.y);
@@ -1220,7 +769,6 @@
         ctx.lineWidth = 1.2;
         ctx.stroke();
 
-        // Multi-lobed neutrophil nucleus inside leukocyte
         ctx.fillStyle = 'rgba(84, 11, 22, 0.45)';
         for (let n = 0; n < 3; n++) {
           const na = wbc.phase + (n * Math.PI * 2) / 3;
@@ -1235,62 +783,38 @@
       function render(time) {
         ctx.clearRect(0, 0, width, height);
 
-        // 1. Background & Midground Red Blood Cells
         rbcs.forEach((cell) => {
           if (!isFlowPaused) {
             cell.x += cell.vx;
             cell.y += cell.vy + Math.sin(time * 0.001 + cell.phase) * 0.18;
             cell.angle += cell.spin;
-            if (cell.x < -cell.r * 2) {
-              Object.assign(cell, createRBC(true));
-            }
+            if (cell.x < -cell.r * 2) Object.assign(cell, createRBC(true));
           }
           if (cell.depth < 0.72) drawErythrocyte(cell);
         });
 
-        // 2. Translucent White Blood Cells (Leukocytes)
         leukocytes.forEach((wbc) => {
           if (!isFlowPaused) {
             wbc.x += wbc.vx;
             wbc.y += wbc.vy + Math.cos(time * 0.0009 + wbc.phase) * 0.15;
-            if (wbc.x < -wbc.r * 2) {
-              Object.assign(wbc, createLeukocyte(true));
-            }
+            if (wbc.x < -wbc.r * 2) Object.assign(wbc, createLeukocyte(true));
           }
           drawLeukocyte(wbc, time);
         });
 
-        // 3. Rod-Shaped Bacilli Bacteria with Flagella
         bacilli.forEach((b) => {
           if (!isFlowPaused) {
             b.x += b.vx;
             b.y += b.vy + Math.sin(time * 0.002 + b.wobblePhase) * 0.26;
-            if (b.x < -b.len * 2.5) {
-              Object.assign(b, createBacillus(true));
-            }
+            if (b.x < -b.len * 2.5) Object.assign(b, createBacillus(true));
           }
           drawBacillus(b, time);
         });
 
-        // 4. Spiked Virions (Coronaviruses)
-        virions.forEach((v) => {
-          if (!isFlowPaused) {
-            v.x += v.vx;
-            v.y += v.vy + Math.sin(time * 0.0015 + v.phase) * 0.24;
-            v.angle += v.spin;
-            if (v.x < -v.r * 2.5) {
-              Object.assign(v, createVirion(true));
-            }
-          }
-          drawVirion(v, time);
-        });
-
-        // 5. Sharp Foreground Red Blood Cells
         rbcs.forEach((cell) => {
           if (cell.depth >= 0.72) drawErythrocyte(cell);
         });
 
-        // 6. Glowing Plasma Platelets & Antibodies
         platelets.forEach((p) => {
           if (!isFlowPaused) {
             p.x += p.vx;
@@ -1327,34 +851,33 @@
       };
     }
 
-    // 6. Pathogen Showcase Carousel (01 / 03)
     const slides = [
       {
         counter: '01 / 03',
-        overline: 'SPECIMEN TELEMETRY 01',
-        titleMain: 'Viral Capsids &amp;<br />Spike ',
-        titleAccent: 'Dynamics',
-        desc: 'Enveloped virions ringed with trimeric glycoprotein spikes rotate through laminar arterial plasma, scanning endothelial receptor sites.',
+        overline: 'OUTBREAK DRIVER 01',
+        titleMain: 'The Vector<br />',
+        titleAccent: 'Breeding Clock',
+        desc: 'Stagnant water in drains and containers takes 7–14 days for Aedes aegypti eggs to mature into adult mosquitoes, followed by viral incubation and symptom onset 2–4 weeks after rain[cite: 2].',
         texIdx: 0,
-        focusMode: 'virology',
+        focusMode: 'balanced',
         grade: 'radial-gradient(circle at 75% 35%, rgba(217, 107, 125, 0.24) 0%, rgba(158, 27, 50, 0.36) 34%, rgba(84, 11, 22, 0.64) 62%, #060102 100%)',
       },
       {
         counter: '02 / 03',
-        overline: 'SPECIMEN TELEMETRY 02',
-        titleMain: 'Bacilli &amp; Flagellar<br />',
-        titleAccent: 'Propulsion',
-        desc: 'Rod-shaped prokaryotic bacilli whip helical flagella tails to navigate shear stress gradients across microvascular bifurcations.',
+        overline: 'OUTBREAK DRIVER 02',
+        titleMain: 'Hyper-Local Ward<br />',
+        titleAccent: 'Vulnerability',
+        desc: 'Identical rainfall hits wards differently when drainage bottlenecks, high population density, and sanitation gaps accelerate local breeding and transmission[cite: 2].',
         texIdx: 1,
         focusMode: 'bacteriology',
         grade: 'radial-gradient(circle at 72% 40%, rgba(247, 230, 233, 0.22) 0%, rgba(217, 107, 125, 0.32) 32%, rgba(46, 2, 9, 0.68) 65%, #060102 100%)',
       },
       {
         counter: '03 / 03',
-        overline: 'SPECIMEN TELEMETRY 03',
-        titleMain: 'Erythrocyte &amp; Plasma<br />',
-        titleAccent: 'Rheology',
-        desc: 'Biconcave erythrocytes tumble alongside amoeboid leukocytes and clotting platelets in oxygenated hemoglobin currents.',
+        overline: 'OUTBREAK DRIVER 03',
+        titleMain: 'Targeted Vector<br />',
+        titleAccent: 'Containment',
+        desc: 'Giving public health teams a 2–4 week lead window helps deploy larvicide and spraying ahead of surges before hospitals run short of beds, saline, and testing kits[cite: 2].',
         texIdx: 2,
         focusMode: 'rheology',
         grade: 'radial-gradient(circle at 78% 30%, rgba(217, 107, 125, 0.26) 0%, rgba(84, 11, 22, 0.44) 38%, rgba(46, 2, 9, 0.70) 68%, #060102 100%)',
@@ -1377,9 +900,7 @@
       titleEl.innerHTML = `${slide.titleMain}<span class="serif-crimson-accent font-normal text-[2.85rem] sm:text-[3.75rem] lg:text-[4.35rem]">${slide.titleAccent}</span>`;
       descEl.textContent = slide.desc;
       counterEl.textContent = slide.counter;
-      if (showcaseController) {
-        showcaseController.setFocusMode(slide.focusMode);
-      }
+      if (showcaseController) showcaseController.setFocusMode(slide.focusMode);
     }
 
     document.getElementById('prev-slide-btn').addEventListener('click', () => {
@@ -1392,38 +913,6 @@
       updateSlide(currentSlide);
     });
 
-    // 7. Deep Arterial Crimson Grade vs. Vivid Microscopy Stain Controls
-    const btnCrimsonGrade = document.getElementById('btn-crimson-grade');
-    const btnStainGrade = document.getElementById('btn-stain-grade');
-    const heroGrade = document.getElementById('hero-crimson-grade');
-    const heroMultiply = document.getElementById('hero-crimson-multiply');
-    const showcaseMultiply = document.getElementById('showcase-color-multiply');
-
-    btnCrimsonGrade.addEventListener('click', () => {
-      isVividStain = false;
-      heroGrade.style.opacity = '1';
-      heroMultiply.style.opacity = '1';
-      colorGrade.style.opacity = '1';
-      showcaseMultiply.style.opacity = '1';
-
-      btnCrimsonGrade.className = 'px-4 py-1.5 rounded-full text-xs font-medium bg-gradient-to-r from-clotShadow to-oxyHemoglobin text-cellularMist shadow transition-all';
-      btnStainGrade.className = 'px-4 py-1.5 rounded-full text-xs font-medium text-cellularMist/65 hover:text-cellularMist transition-all';
-      showToast('Switched to Deep Arterial Crimson Grade');
-    });
-
-    btnStainGrade.addEventListener('click', () => {
-      isVividStain = true;
-      heroGrade.style.opacity = '0.15';
-      heroMultiply.style.opacity = '0.2';
-      colorGrade.style.opacity = '0.15';
-      showcaseMultiply.style.opacity = '0.2';
-
-      btnStainGrade.className = 'px-4 py-1.5 rounded-full text-xs font-medium bg-gradient-to-r from-clotShadow to-oxyHemoglobin text-cellularMist shadow transition-all';
-      btnCrimsonGrade.className = 'px-4 py-1.5 rounded-full text-xs font-medium text-cellularMist/65 hover:text-cellularMist transition-all';
-      showToast('Switched to Vivid Microscopy Stain');
-    });
-
-    // 8. Pause / Resume Bloodstream Flow Control
     const btnToggleFlow = document.getElementById('btn-toggle-flow');
     const flowStatusText = document.getElementById('flow-status-text');
     const flowStatusDot = document.getElementById('flow-status-dot');
@@ -1434,48 +923,29 @@
       flowStatusText.textContent = isFlowPaused ? 'Resume Flow' : 'Pause Flow';
       flowStatusDot.classList.toggle('animate-pulse', !isFlowPaused);
       flowStatusDot.style.opacity = isFlowPaused ? '0.4' : '1';
-      showToast(isFlowPaused ? 'Bloodstream flow paused' : 'Bloodstream flow resumed');
     });
 
-    // 9. Pathogen Load Slider / Boost Control
     const loadSlider = document.getElementById('pathogen-load-slider');
     const loadLabel = document.getElementById('pathogen-load-label');
-    const heroVirionCount = document.getElementById('hero-virion-count');
+    const heroRiskBadge = document.getElementById('hero-virion-count');
 
     const loadLabels = {
-      '1': { text: 'Normal (1.0x)', badge: 'ACTIVE' },
-      '2': { text: 'Elevated (2.0x)', badge: 'ELEVATED' },
-      '3': { text: 'High Viral Load (3.0x)', badge: 'CRITICAL' },
+      '1': { text: 'Low (1.0x)', badge: 'LOW' },
+      '2': { text: 'High (2.0x)', badge: 'HIGH' },
+      '3': { text: 'Critical (3.0x)', badge: 'CRITICAL' },
     };
 
     loadSlider.addEventListener('input', (e) => {
       pathogenMultiplier = Number(e.target.value);
       const info = loadLabels[String(pathogenMultiplier)] || loadLabels['1'];
       loadLabel.textContent = info.text;
-      if (heroVirionCount) heroVirionCount.textContent = info.badge;
+      if (heroRiskBadge) heroRiskBadge.textContent = info.badge;
       bloodstreamControllers.forEach((ctrl) => ctrl && ctrl.refreshDensity());
-      showToast(`Pathogen Load set to ${info.text}`);
     });
 
-    // 10. Specimen Request Drawer Toggle & Form Submit
-    const openSampleBtn = document.getElementById('open-sample-btn');
-    const sampleForm = document.getElementById('sample-inquiry-form');
-
-    openSampleBtn.addEventListener('click', () => {
-      sampleForm.classList.toggle('hidden');
-    });
-
-    sampleForm.addEventListener('submit', (e) => {
-      e.preventDefault();
-      sampleForm.reset();
-      sampleForm.classList.add('hidden');
-      showToast('Specimen protocol transmitted to Hemalis Lab');
-    });
-
-    // Initialize Canvases on Window Load
     window.addEventListener('load', () => {
       const heroCtrl = initBloodstreamCanvas('hero-bloodstream-canvas', 'balanced');
-      showcaseController = initBloodstreamCanvas('showcase-bloodstream-canvas', 'virology');
+      showcaseController = initBloodstreamCanvas('showcase-bloodstream-canvas', 'balanced');
       bloodstreamControllers.push(heroCtrl, showcaseController);
     });
   </script>
