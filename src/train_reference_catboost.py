@@ -8,7 +8,13 @@ import numpy as np
 import pandas as pd
 from catboost import CatBoostRegressor
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
-from src.reference_catboost_features import CATEGORICAL_FEATURES, FEATURE_COLUMNS, engineer_features, usable_feature_mask
+from src.reference_catboost_features import (
+    CATEGORICAL_FEATURES,
+    FEATURE_COLUMNS,
+    FEATURE_SCHEMA_VERSION,
+    engineer_features,
+    usable_feature_mask,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
 INPUT = ROOT / 'data/processed/dengue_dataset.csv'
@@ -32,13 +38,14 @@ def run_training(input_path: Path = INPUT, output_parent: Path | None = None) ->
     run_dir.mkdir(exist_ok=False)
     (run_dir / 'models').mkdir(); (run_dir / 'results').mkdir()
     metadata = {
-      'schema_version': 1, 'backend': 'reference_catboost', 'run_created_utc': datetime.now(timezone.utc).isoformat(),
+      'schema_version': FEATURE_SCHEMA_VERSION, 'backend': 'reference_catboost', 'run_created_utc': datetime.now(timezone.utc).isoformat(),
       'dataset': str(input_path.relative_to(ROOT)) if input_path.is_relative_to(ROOT) else input_path.name,
       'dataset_rows': int(len(raw)), 'ward_count': int(raw.ward_id.nunique()),
       'dataset_sha256': hashlib.sha256(input_path.read_bytes()).hexdigest(),
       'source_columns': list(raw.columns), 'fit_count': 3,
       'input_date_min': str(pd.to_datetime(raw.date).min().date()), 'input_date_max': str(pd.to_datetime(raw.date).max().date()),
-      'feature_names': FEATURE_COLUMNS, 'categorical_features': CATEGORICAL_FEATURES,
+      'feature_names': FEATURE_COLUMNS, 'feature_schema_version': FEATURE_SCHEMA_VERSION,
+      'categorical_features': CATEGORICAL_FEATURES,
       'parameters': PARAMS, 'target_definition': 'dengue_cases at the same ward after h weekly observations',
       'split': 'Chronological target-date split matching reference: train target year <= 2024; test target year == 2025.',
       'evaluation_method': 'single_chronological_train_test_split', 'horizons': {},

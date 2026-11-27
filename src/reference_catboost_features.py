@@ -1,9 +1,8 @@
 """Reference-repository CatBoost feature contract for Phase2 data.
 
 The reference implementation consumes the raw columns present in the Phase2
-processed CSV and engineers features per ward. All lagged/rolling values use
-observations strictly before the origin; current-week values are only included
-where the reference uses contemporaneous weather or dengue.
+processed CSV and engineers features per ward. Lagged/rolling features use
+observations strictly before the origin; only weather is contemporaneous.
 """
 from __future__ import annotations
 
@@ -17,6 +16,7 @@ RAW_COLUMNS = (
     "relative_humidity_pct", "dengue_cases",
 )
 CATEGORICAL_FEATURES = ("city", "ward_id")
+FEATURE_SCHEMA_VERSION = 2
 
 
 def feature_names() -> list[str]:
@@ -24,6 +24,7 @@ def feature_names() -> list[str]:
     for lag in range(1, 5):
         names.extend((f"rainfall_lag_{lag}w", f"avg_temp_lag_{lag}w",
                       f"humidity_lag_{lag}w", f"dengue_cases_lag_{lag}w"))
+    names.append("dengue_cases_lag_5w")
     for window in (2, 4, 8):
         names.extend((f"rainfall_mean_prev_{window}w", f"rainfall_sum_prev_{window}w"))
     for window in (2, 4, 8):
@@ -32,8 +33,8 @@ def feature_names() -> list[str]:
         names.append(f"humidity_mean_prev_{window}w")
     for window in (2, 4, 8):
         names.append(f"dengue_mean_prev_{window}w")
-    names.extend(("dengue_change_1w", "dengue_change_2w", "dengue_change_4w",
-                  "dengue_growth_ratio_1w", "dengue_growth_ratio_2w",
+    names.extend(("dengue_change_prev_1w", "dengue_change_prev_2w", "dengue_change_prev_4w",
+                  "dengue_growth_ratio_prev_1w", "dengue_growth_ratio_prev_2w",
                   "calendar_week", "calendar_month", "week_sin", "week_cos",
                   "month_sin", "month_cos"))
     return names
@@ -42,7 +43,7 @@ FEATURE_COLUMNS = feature_names()
 
 
 def engineer_features(frame: pd.DataFrame) -> pd.DataFrame:
-    """Recreate reference features in deterministic order without crossing wards."""
+    """Create ward features using weather now and case observations from prior weeks."""
     missing = [c for c in RAW_COLUMNS if c not in frame.columns]
     if missing:
         raise ValueError(f"Dataset is missing reference source columns: {missing}")
@@ -62,6 +63,7 @@ def engineer_features(frame: pd.DataFrame) -> pd.DataFrame:
         for source, name in (("rainfall_mm", "rainfall"), ("avg_temp_C", "avg_temp"),
                              ("relative_humidity_pct", "humidity"), ("dengue_cases", "dengue_cases")):
             data[f"{name}_lag_{lag}w"] = grouped[source].shift(lag)
+    data["dengue_cases_lag_5w"] = grouped["dengue_cases"].shift(5)
     grouped = data.groupby("ward_id", sort=False, observed=True)
     for window in (2, 4, 8):
         previous = grouped["rainfall_mm"].transform(lambda s: s.shift(1).rolling(window, min_periods=window).mean())
@@ -74,11 +76,15 @@ def engineer_features(frame: pd.DataFrame) -> pd.DataFrame:
         for window in (2, 4, 8):
             data[f"{prefix}_mean_prev_{window}w"] = grouped[source].transform(
                 lambda s: s.shift(1).rolling(window, min_periods=window).mean())
-    data["dengue_change_1w"] = data.dengue_cases - data.dengue_cases_lag_1w
-    data["dengue_change_2w"] = data.dengue_cases_lag_1w - data.dengue_cases_lag_2w
-    data["dengue_change_4w"] = data.dengue_cases_lag_1w - data.dengue_cases_lag_4w
-    data["dengue_growth_ratio_1w"] = data.dengue_cases / (data.dengue_cases_lag_1w + 1)
-    data["dengue_growth_ratio_2w"] = data.dengue_cases / (data.dengue_cases_lag_2w + 1)
+    data["dengue_change_prev_1w"] = data.dengue_cases_lag_1w - data.dengue_cases_lag_2w
+    data["dengue_change_prev_2w"] = data.dengue_cases_lag_1w - data.dengue_cases_lag_3w
+    data["dengue_change_prev_4w"] = data.dengue_cases_lag_1w - data.dengue_cases_lag_5w
+    data["dengue_growth_ratio_prev_1w"] = (
+        data.dengue_cases_lag_1w / (data.dengue_cases_lag_2w + 1)
+    )
+    data["dengue_growth_ratio_prev_2w"] = (
+        data.dengue_cases_lag_1w / (data.dengue_cases_lag_3w + 1)
+    )
     iso = data.date.dt.isocalendar()
     data["calendar_week"] = iso.week.astype(int)
     data["calendar_month"] = data.date.dt.month

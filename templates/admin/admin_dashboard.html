@@ -17,8 +17,8 @@
     href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap"
     rel="stylesheet"
   >
-  <link rel="stylesheet" href="/static/css/admin/admin_dashboard.css?v=3">
-  <script src="/static/js/admin/admin.js?v=3" defer></script>
+  <link rel="stylesheet" href="/static/css/admin/admin_dashboard.css?v=4">
+  <script src="/static/js/admin/admin.js?v=4" defer></script>
 </head>
 
 <body class="dashboard-page">
@@ -290,12 +290,16 @@
               <h2 id="settings-title">Platform settings</h2>
             </div>
           </div>
-          <div class="settings-empty">
-            <span class="settings-symbol" aria-hidden="true">⚙</span>
-            <div>
-              <h3>Settings overview</h3>
-              <p>No configuration controls are connected. Account and platform changes remain managed through the existing backend.</p>
-            </div>
+          <div class="capacity-settings">
+            <p>Set each ward's staffed bed capacity and current occupancy. These values drive local deficits, city utilization, and same-city overflow suggestions.</p>
+            <form id="wardCapacityForm">
+              <label>City<input name="city" required maxlength="100" placeholder="Dhaka North"></label>
+              <label>Ward ID<input name="wardId" required maxlength="100" placeholder="WARD_01"></label>
+              <label>Total beds<input name="totalBeds" type="number" min="0" step="1" required></label>
+              <label>Occupied beds<input name="occupiedBeds" type="number" min="0" step="1" required></label>
+              <button type="submit">Save ward capacity</button>
+            </form>
+            <p id="wardCapacityMessage" role="status" aria-live="polite"></p>
           </div>
         </article>
       </section>

@@ -69,5 +69,18 @@ dd { margin: 0; font-size: 12px; font-weight: 700; text-align: right; }
 .contract-stats { display: flex; align-items: baseline; gap: 8px; margin: 24px 0 6px; }
 .contract-stats strong { font: 800 42px/1 "Plus Jakarta Sans", sans-serif; color: var(--accent-2); }
 .contract-stats span { color: var(--muted); font-size: 12px; }
+.operations-panel { grid-column: 1 / -1; }
+#operationsSummary { display: grid; gap: 10px; color: var(--muted); font-size: 12px; line-height: 1.6; }
+#operationsSummary strong { color: var(--text); }
+#operationsSummary p { margin: 0; }
+#operationsSummary table { width: 100%; border-collapse: collapse; font-size: 11px; }
+#operationsSummary th, #operationsSummary td { padding: 8px; border-bottom: 1px solid var(--border); text-align: left; }
+#operationsSummary th { color: var(--text); font-weight: 700; }
+#operationsSummary .operations-warning { color: var(--danger); font-weight: 700; }
+.scarcity-controls { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 0 0 18px; padding: 14px; border: 1px solid var(--border); border-radius: 12px; background: #ffffff04; }
+.scarcity-controls label { display: grid; gap: 8px; color: var(--muted); }
+.scarcity-controls strong { color: var(--text); }
+.scarcity-controls input[type="range"] { min-height: 24px; padding: 0; }
+.scarcity-controls small { grid-column: 1 / -1; }
 @media (max-width: 850px) { .hero, .result-header { flex-direction: column; align-items: flex-start; } .form-grid, .result-grid { grid-template-columns: 1fr; } .metric-grid { grid-template-columns: 1fr 1fr; } }
-@media (max-width: 620px) { .page-shell { width: min(100% - 22px, 1180px); } .fields.two, .fields.three, .metric-grid { grid-template-columns: 1fr; } .hero, .panel, .result { padding: 20px; } h1 { font-size: 34px; } .brand span { display: none; } }
+@media (max-width: 620px) { .page-shell { width: min(100% - 22px, 1180px); } .fields.two, .fields.three, .metric-grid, .scarcity-controls { grid-template-columns: 1fr; } .hero, .panel, .result { padding: 20px; } h1 { font-size: 34px; } .brand span { display: none; } }

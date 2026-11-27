@@ -77,8 +77,5 @@ def describe_drivers(ward_history: pd.DataFrame, latest: pd.Series) -> dict[str,
         "rainfall": _relative_label(float(latest["rainfall_mm"]), ward_history["rainfall_mm"], " mm"),
         "temperature": _relative_label(float(latest["avg_temp_C"]), ward_history["avg_temp_C"], " °C"),
         "humidity": _relative_label(float(latest["relative_humidity_pct"]), ward_history["relative_humidity_pct"], "%"),
-        "recentCases": (
-            f"{float(latest['dengue_cases']):g} new cases in the observed reporting week; "
-            "context only, not a causal explanation"
-        ),
+        "recentCases": "Current-week dengue cases were not supplied; only prior confirmed case history is used.",
     }
