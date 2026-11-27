@@ -4,6 +4,25 @@ Ward-level dengue forecasting and emergency resource planning for 60 urban wards
 
 Phase 1 forecasts weekly dengue cases 2, 3 and 4 weeks ahead. Phase 2 (the onsite final of the EDU AI Engineering Hackathon 2026) builds on that forecast to plan saline bags, diagnostic kits, hospital beds, spraying crews and same-city bed overflow routing for ward commissioners and health-center managers.
 
+AEDISIGHT — Application Screenshots
+
+Here is a preview of the AEDISIGHT dengue outbreak prediction platform.
+
+### 1. Main Dashboard
+![Main Dashboard](assets/images/UI_PIC_1%28user_1st_page%29.png)
+
+### 2. Hospital Dashboard
+![Hospital Dashboard](assets/images/UI_PIC_1.png)
+
+### 3. Dengue Prediction
+![Dengue Prediction](assets/images/UI_PIC_1%28test_forecast_zoomed_out%29.png)
+
+### 4. Analytics and Visualization
+![Analytics](assets/images/UI_PIC_1%28test_forecast_zoomed_out_2%29.png)
+
+### 5. Admin Dashboard
+![Admin Dashboard](assets/images/UI_PIC_1%28admin_UI%29.png)
+
 | | |
 |---|---|
 | Live URL | TODO: paste the deployed Vercel URL |
