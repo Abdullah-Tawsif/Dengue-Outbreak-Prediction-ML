@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 """Validate the supplied ward-level dengue CSV and add historical features.
 
-No third-party packages are required. The dengue_cases values are preserved as
-supplied; their meaning (weekly new cases or cumulative totals) is not inferred.
+No third-party packages are required. Per project-owner confirmation,
+``dengue_cases`` is preserved as the number of new cases in the associated
+seven-day ward reporting period; it is not cumulative. The exact week boundary
+convention is not documented, so the source observation date remains its label.
 
 Run from the repository root with::
 
@@ -16,7 +18,9 @@ from __future__ import annotations
 import argparse
 import csv
 import math
+import os
 import sys
+import tempfile
 from collections import defaultdict
 from datetime import date, datetime
 from pathlib import Path
@@ -442,10 +446,13 @@ def _engineer_features(
             enriched.append(output_row)
 
     enriched.sort(key=lambda row: (row["ward_id"], row["date"]))
-    output_columns = [
+    normalized_original = [
         "avg_temp_C" if column == "avg_temp_c" else column
         for column in original_columns
-    ] + ENGINEERED_COLUMNS
+    ]
+    output_columns = [
+        column for column in normalized_original if column != "dengue_cases"
+    ] + ENGINEERED_COLUMNS + ["dengue_cases"]
     return enriched, output_columns
 
 
@@ -491,12 +498,39 @@ def clean_dataset(
         output_columns,
     )
 
-    # Write the final complete dataset.
+    # Build and verify a sibling temporary file before replacing a previous
+    # processed dataset, so an interrupted export cannot leave a partial CSV.
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    with output_path.open("w", newline="", encoding="utf-8") as destination:
-        writer = csv.DictWriter(destination, fieldnames=output_columns)
-        writer.writeheader()
-        writer.writerows(enriched)
+    temporary_path: Path | None = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            mode="w", newline="", encoding="utf-8", dir=output_path.parent,
+            prefix=f".{output_path.name}.", suffix=".tmp", delete=False,
+        ) as destination:
+            temporary_path = Path(destination.name)
+            writer = csv.DictWriter(destination, fieldnames=output_columns)
+            writer.writeheader()
+            writer.writerows(enriched)
+            destination.flush()
+            os.fsync(destination.fileno())
+        with temporary_path.open("r", newline="", encoding="utf-8") as generated:
+            reader = csv.DictReader(generated)
+            if reader.fieldnames != output_columns:
+                raise DatasetValidationError("Generated CSV header verification failed.")
+            verified_rows = 0
+            for row in reader:
+                if None in row or any(value is None or value.strip().lower() in MISSING_MARKERS for value in row.values()):
+                    raise DatasetValidationError("Generated CSV contains malformed or missing values.")
+                verified_rows += 1
+        if verified_rows != len(enriched):
+            raise DatasetValidationError(
+                f"Generated CSV row verification failed: expected {len(enriched)}, found {verified_rows}."
+            )
+        os.replace(temporary_path, output_path)
+        temporary_path = None
+    finally:
+        if temporary_path is not None:
+            temporary_path.unlink(missing_ok=True)
 
     print(f"\nFinal dataset saved: {output_path}")
     print(f"Final dataset rows: {len(enriched):,}")
