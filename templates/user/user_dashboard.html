@@ -9,7 +9,7 @@
     content="Explore ward-level dengue forecasts in your AEDISIGHT workspace."
   >
 
-  <title>AEDISIGHT — Ward Forecast Dashboard</title>
+  <title>AEDISIGHT — Dengue Early Warning</title>
   <meta name="csrf-token" content="{{ csrf_token }}">
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -18,8 +18,8 @@
     href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap"
     rel="stylesheet"
   >
-  <link rel="stylesheet" href="/static/css/user/user_dashboard.css?v=7">
-  <script src="/static/js/user/user.js?v=7" defer></script>
+  <link rel="stylesheet" href="/static/css/user/user_dashboard.css?v=8">
+    <script src="/static/js/user/user.js?v=10" defer></script>
 </head>
 
 <body class="dashboard-page">
@@ -101,8 +101,8 @@
 
         <div class="header-copy">
           <span class="dash-kicker">HOSPITAL WORKSPACE</span>
-          <h1>Ward forecast dashboard</h1>
-          <p>{{ current_user.hospital_name }}</p>
+          <h1>Dengue Early Warning System</h1>
+          <p>Ward-level dengue outbreak-risk monitoring and 2–4-week early warning.</p>
         </div>
 
         <a class="home-link" href="/">
@@ -115,14 +115,14 @@
         <div class="welcome-copy">
           <span class="status-pill">
             <span class="status-dot" aria-hidden="true"></span>
-            Historical-data CatBoost model connected
+            {% if data_error %}Data unavailable{% elif model_horizons %}Compatible weekly models: {{ model_horizons|join(', ') }} week{% if model_horizons|length != 1 %}s{% endif %}{% else %}No compatible leakage-aware model artifacts{% endif %}
           </span>
           <span class="panel-kicker">DENGUE EARLY WARNING</span>
-          <h2 id="welcome-title">Explore a ward forecast.</h2>
+          <h2 id="welcome-title">Explore a ward-level dengue forecast.</h2>
           <p>
-            Select a city, ward, forecast period and origin week. The CatBoost
-            model forecasts weekly cases 2 or 4 weeks ahead of that week and
-            assigns a ward-relative risk tier.
+            Select a ward, a supported held-out test origin and forecast horizon.
+            Historical replay uses the prediction saved at that origin, with only
+            labels available then. Risk classes are experimental.
           </p>
         </div>
 
@@ -136,9 +136,16 @@
               <path d="M7 41h34"></path>
             </svg>
           </div>
-          <span>CatBoost forecast</span>
+          <span>Historical model forecast</span>
         </div>
       </section>
+
+      {% if freshness and freshness.status == 'stale' %}
+      <section class="freshness-alert" role="alert" aria-live="polite">
+        <strong>Historical data only — current forecasting is disabled.</strong>
+        <span>{{ freshness.message }}</span>
+      </section>
+      {% endif %}
 
       <section class="forecast-workspace" aria-label="Ward forecast workspace">
         <article
@@ -153,76 +160,70 @@
             </div>
           </div>
 
-          <form id="forecastForm" novalidate>
+          <form id="forecastForm" data-available-horizons='{{ model_horizons|tojson|forceescape }}' data-date-bounds='{{ date_bounds|tojson|forceescape }}' novalidate>
             <div class="selector-grid">
               <div class="form-field">
                 <label for="citySelect">City</label>
-                <select id="citySelect" name="city" required>
+                <select id="citySelect" name="city" required {% if not areas %}disabled{% endif %}>
                   <option value="">Select a city</option>
-                  <option value="Chattogram" data-ward-prefix="CCC" data-ward-count="10">
-                    Chattogram
-                  </option>
-                  <option value="Dhaka North" data-ward-prefix="DNCC" data-ward-count="20">
-                    Dhaka North
-                  </option>
-                  <option value="Dhaka South" data-ward-prefix="DSCC" data-ward-count="20">
-                    Dhaka South
-                  </option>
-                  <option value="Gazipur" data-ward-prefix="GCC" data-ward-count="5">
-                    Gazipur
-                  </option>
-                  <option value="Narayanganj" data-ward-prefix="NCC" data-ward-count="5">
-                    Narayanganj
-                  </option>
+                  {% for city, wards in areas.items() %}
+                  <option value="{{ city }}" data-wards="{{ wards|tojson|forceescape }}">{{ city }}</option>
+                  {% endfor %}
                 </select>
               </div>
 
               <div class="form-field">
                 <label for="wardSelect">Ward</label>
                 <select id="wardSelect" name="ward" required disabled>
-                  <option value="">Select a city first</option>
+                  <option value="">{% if areas %}Select a city first{% else %}Area data unavailable{% endif %}</option>
                 </select>
               </div>
             </div>
 
-            <div class="form-field origin-field">
-              <label for="asOfDate">Forecast origin week</label>
-              <input type="date" id="asOfDate" name="asOf"
-                     min="2016-03-28" max="2025-12-29" value="2025-08-04">
-              <small>Dengue peaks Jul–Sep. Pick a week in May–Sep to see peak-season risk;
-                2025-12-29 is the latest (dry-season) data.</small>
-            </div>
-
             <fieldset class="period-fieldset">
-              <legend>Forecast period</legend>
+              <legend>Forecast horizon</legend>
               <div class="period-options">
                 <label class="period-option">
-                  <input type="radio" name="horizon" value="2" checked>
+                  <input type="radio" name="horizon" value="2" {% if 2 not in model_horizons %}disabled{% endif %} {% if not model_horizons or model_horizons[0] == 2 %}checked{% endif %}>
                   <span>2 weeks</span>
                 </label>
                 <label class="period-option">
-                  <input type="radio" name="horizon" value="4">
+                  <input type="radio" name="horizon" value="3" {% if 3 not in model_horizons %}disabled{% endif %} {% if model_horizons and model_horizons[0] == 3 %}checked{% endif %}>
+                  <span>3 weeks</span>
+                </label>
+                <label class="period-option">
+                  <input type="radio" name="horizon" value="4" {% if 4 not in model_horizons %}disabled{% endif %} {% if model_horizons and model_horizons[0] == 4 %}checked{% endif %}>
                   <span>4 weeks</span>
                 </label>
               </div>
             </fieldset>
 
-            <button class="primary-btn" id="generateForecast" type="submit">
-              <span class="button-spinner" id="buttonSpinner" aria-hidden="true" hidden></span>
+            <div class="form-field origin-field">
+              <label for="asOfDate">Forecast date (choose any available calendar date)</label>
+              <input id="asOfDate" name="asOf" type="date" {% if date_bounds %}min="{{ date_bounds.min }}" max="{{ date_bounds.max }}" value="{{ date_bounds.max }}"{% else %}disabled{% endif %} required>
+              <small class="date-resolution-help" id="dateResolutionHelp">A date between weekly observations resolves to the latest observation on or before your selected date. Historical estimates can be retrospective when the selected model was trained through a later date.</small>
+              <label class="current-forecast-toggle" for="currentMode">
+                <input id="currentMode" name="currentMode" type="checkbox" {% if not freshness or not freshness.currentForecastAvailable %}disabled{% endif %}>
+                Use latest data for a current forecast
+              </label>
+            </div>
+
+            <button class="primary-btn" id="generateForecast" type="submit" {% if not areas or not model_horizons %}disabled{% endif %}>
+              <span class="button-spinner" id="buttonSpinner" aria-hidden="true"></span>
               <span id="buttonLabel">Generate forecast</span>
               <span aria-hidden="true">→</span>
             </button>
 
             <p class="form-message" id="forecastMessage" role="status" aria-live="polite">
-              Select a city and ward to prepare your forecast request.
+              {% if data_error %}{{ data_error }}{% else %}Select a city, ward and forecast period.{% endif %}
             </p>
           </form>
 
           <div class="data-freshness">
             <span class="freshness-icon" aria-hidden="true">◷</span>
             <div>
-              <strong>Historical training dataset</strong>
-              <span>Observations through 29 Dec 2025 · not live data</span>
+              <strong>{% if freshness and freshness.status == 'stale' %}Stale historical data{% else %}Weekly data status{% endif %}</strong>
+              <span>{% if data_through %}Data available through {{ data_through }}{% else %}Historical source data unavailable{% endif %} · no live weather or case feed</span>
             </div>
           </div>
         </article>
@@ -251,8 +252,8 @@
                 <circle cx="37" cy="15" r="2"></circle>
               </svg>
             </div>
-            <h3>No forecast generated yet</h3>
-            <p>Choose an area and period. No prediction is shown until a model response is available.</p>
+            <h3>No dengue forecast generated yet</h3>
+            <p>Choose an area and period. Results appear only when the model service returns a prediction.</p>
           </div>
 
           <div class="result-state loading-state" id="forecastLoading" role="status" aria-live="polite" hidden>
@@ -274,20 +275,21 @@
           <div class="result-success" id="forecastSuccess" hidden>
             <div class="prediction-cards">
               <article class="prediction-card">
-                <span>Predicted cases</span>
-                <strong id="predictedCases">—</strong>
+                <span>Expected new dengue cases for target reporting week</span>
+                <strong id="expectedPredictedCases">—</strong>
+                <small id="roundedPredictedCases">Rounded case estimate: — cases</small>
+                <small id="rawModelOutput" hidden></small>
                 <small id="predictionPeriod">Awaiting forecast</small>
+                <small id="predictionModel">Selected model: —</small>
               </article>
               <article class="prediction-card">
                 <span>Risk category</span>
                 <strong id="riskCategory">—</strong>
-                <small id="riskDetail">Ward-relative percentile band</small>
+                <small>Experimental; not clinically validated</small>
               </article>
             </div>
             <p class="observation-date" id="observationDate"></p>
-            <p class="actual-note" id="actualNote" hidden></p>
-            <p class="season-note" id="seasonNote" hidden></p>
-            <p class="risk-warning" id="riskWarning"></p>
+            <p class="risk-warning" id="riskWarning" hidden></p>
           </div>
         </article>
       </section>
@@ -296,13 +298,13 @@
         <article class="panel drivers-panel" aria-labelledby="drivers-title">
           <div class="panel-head">
             <div>
-              <span class="panel-kicker">03 · WEATHER DRIVERS</span>
-              <h2 id="drivers-title">What influenced this forecast?</h2>
+              <span class="panel-kicker">03 · FORECAST DRIVERS</span>
+              <h2 id="drivers-title">Observed model inputs</h2>
             </div>
           </div>
 
           <p class="detail-empty" id="driversEmpty">
-            Driver explanations will appear after a successful prediction.
+              Observed weather and vulnerability values will appear with a forecast. They are context, not causal or model-attribution explanations.
           </p>
           <dl class="driver-list" id="driverList" hidden>
             <div>
@@ -318,24 +320,41 @@
               <dd id="humidityDriver">—</dd>
             </div>
             <div>
-              <dt>Recent dengue cases</dt>
+              <dt>New cases in observed reporting week</dt>
               <dd id="recentCasesDriver">—</dd>
             </div>
+          </dl>
+          <p class="detail-empty rainfall-timing" id="rainfallTimingSummary" hidden></p>
+          <h3 class="observed-features-title">Observed weather and vulnerability features</h3>
+          <p class="detail-empty">These values describe the selected forecast origin; they are not causal explanations.</p>
+          <dl class="driver-list observed-feature-list" id="observedFeatureList" hidden>
+            <div><dt>Average temperature</dt><dd id="featureAvgTemp">—</dd></div>
+            <div><dt>Relative humidity</dt><dd id="featureHumidity">—</dd></div>
+            <div><dt>Recent rainfall</dt><dd id="featureRainfall">—</dd></div>
+            <div><dt>Rainfall lag 1 week</dt><dd id="featureRainLag1">—</dd></div>
+            <div><dt>Rainfall lag 2 weeks</dt><dd id="featureRainLag2">—</dd></div>
+            <div><dt>Rainfall lag 3 weeks</dt><dd id="featureRainLag3">—</dd></div>
+            <div><dt>Rainfall lag 4 weeks</dt><dd id="featureRainLag4">—</dd></div>
+            <div><dt>Previous 2-week rainfall</dt><dd id="featureRainSum2">—</dd></div>
+            <div><dt>Previous 4-week rainfall</dt><dd id="featureRainSum4">—</dd></div>
+            <div><dt>Population density</dt><dd id="featureDensity">—</dd></div>
+            <div><dt>Waterlogging risk</dt><dd id="featureWaterlogging">—</dd></div>
+            <div><dt>Sanitation score</dt><dd id="featureSanitation">—</dd></div>
           </dl>
         </article>
 
         <article class="panel chart-panel" aria-labelledby="chart-title">
           <div class="panel-head">
             <div>
-              <span class="panel-kicker">04 · CASE HISTORY</span>
-              <h2 id="chart-title">Historical cases vs forecast</h2>
+              <span class="panel-kicker">04 · DENGUE CASE HISTORY</span>
+              <h2 id="chart-title">Weekly new cases and target-week forecast</h2>
             </div>
           </div>
 
           <div class="chart-empty" id="chartEmpty">
             <span class="chart-empty-icon" aria-hidden="true">⌁</span>
             <p>No forecast generated yet</p>
-            <small>Historical and forecast series will appear here after a successful prediction.</small>
+            <small>Historical dengue counts and forecast values will appear here after a successful prediction.</small>
           </div>
 
           <div class="chart-content" id="chartContent" hidden>
@@ -350,7 +369,7 @@
               role="img"
               aria-labelledby="chartSvgTitle chartSvgDescription"
             >
-              <title id="chartSvgTitle">Historical dengue cases and forecast</title>
+              <title id="chartSvgTitle">Historical weekly new dengue cases and forecast</title>
               <desc id="chartSvgDescription"></desc>
               <g class="chart-grid-lines" id="chartGrid"></g>
               <g class="chart-y-axis" id="chartYAxis"></g>
@@ -365,6 +384,28 @@
             </div>
           </div>
         </article>
+      </section>
+
+      <section class="panel model-performance-panel" aria-labelledby="performance-title">
+        <div class="panel-head">
+          <div>
+            <span class="panel-kicker">05 · MODEL RELIABILITY</span>
+            <h2 id="performance-title">Rolling-origin evaluation</h2>
+          </div>
+        </div>
+        <p class="detail-empty" id="performanceEmpty">Model evaluation metrics are unavailable until a compatible run includes saved rolling-origin results.</p>
+        <div class="performance-grid" id="performanceGrid" hidden>
+          <div><span>Validation MAE</span><strong id="validationMae">—</strong></div>
+          <div><span>Validation RMSE</span><strong id="validationRmse">—</strong></div>
+          <div><span>Test MAE</span><strong id="testMae">—</strong></div>
+          <div><span>Persistence MAE</span><strong id="persistenceMae">—</strong></div>
+          <div><span>Seasonal-naive MAE</span><strong id="seasonalMae">—</strong></div>
+          <div><span>Test R²</span><strong id="testR2">—</strong></div>
+          <div><span>Risk-tier exact accuracy</span><strong id="riskExact">—</strong></div>
+          <div><span>HIGH/CRITICAL recall</span><strong id="riskRecall">—</strong></div>
+          <div><span>Critical recall</span><strong id="criticalRecall">—</strong></div>
+        </div>
+        <p class="detail-empty performance-note" id="performanceNote" hidden>Metrics use monthly sampled expanding-window origins. They are historical estimates, not a guarantee of future performance. Risk measures evaluate experimental ordinal categories and are not validated alerts.</p>
       </section>
 
       <section class="panel profile-panel" id="profile" aria-labelledby="profile-title">
@@ -391,9 +432,9 @@
       </section>
 
       <footer class="dashboard-footer">
-        <span>AEDISIGHT · Health intelligence</span>
+        <span>AEDISIGHT · Dengue early-warning workspace</span>
         <span>
-          Forecasts use the historical training dataset (through 29 Dec 2025), not live data.
+          This interface does not currently provide live dengue predictions.
         </span>
       </footer>
     </div>
