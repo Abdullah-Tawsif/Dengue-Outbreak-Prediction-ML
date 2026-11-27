@@ -1,8 +1,8 @@
 """Live weekly-input inference for the reference CatBoost early-warning models.
 
-The live endpoint accepts the six values that can change from week to week:
-current weekly dengue cases and the current week's weather measurements.
-Ward/city/static context is taken from the latest historical row for that ward.
+The live endpoint accepts this week's weather measurements. Dengue case
+features are derived only from confirmed observations before the forecast
+origin. Ward/city/static context is taken from the latest historical row.
 All lag/rolling/cyclic features are then rebuilt by the exact same feature
 engineering function used when the reference CatBoost models were trained.
 """
@@ -21,6 +21,7 @@ from src.feature_engineering import SUPPORTED_HORIZONS
 from src.reference_catboost_features import (
     CATEGORICAL_FEATURES,
     FEATURE_COLUMNS,
+    FEATURE_SCHEMA_VERSION,
     RAW_COLUMNS,
     engineer_features,
     usable_feature_mask,
@@ -92,6 +93,10 @@ def load_live_model(horizon_weeks: int) -> tuple[CatBoostRegressor, dict, Path]:
         info = metadata["horizons"][str(horizon_weeks)]
         if metadata.get("feature_names") != FEATURE_COLUMNS:
             raise ValueError("Run feature metadata does not match the live feature contract")
+        if metadata.get("feature_schema_version") != FEATURE_SCHEMA_VERSION:
+            raise ValueError("Run feature schema version does not match the live feature contract")
+        if metadata.get("schema_version") != FEATURE_SCHEMA_VERSION:
+            raise ValueError("Run metadata schema version does not match the live feature contract")
         if info.get("feature_names") != FEATURE_COLUMNS:
             raise ValueError("Horizon feature metadata does not match the live feature contract")
 
@@ -174,13 +179,29 @@ def predict_live(
     min_temp_c: float,
     rainfall_mm: float,
     relative_humidity_pct: float,
-    dengue_cases: float,
+    additional_observations: pd.DataFrame | None = None,
+    static_context: dict | None = None,
 ) -> dict:
     """Build one live feature row and run the selected CatBoost horizon model."""
     if horizon_weeks not in SUPPORTED_HORIZONS:
         raise LiveInputError(f"Unsupported horizon; choose one of {SUPPORTED_HORIZONS} weeks")
 
     data = load_historical_source()
+    if additional_observations is not None and not additional_observations.empty:
+        extra = additional_observations.loc[
+            additional_observations.city.astype(str).eq(str(city))
+            & additional_observations.ward_id.astype(str).eq(str(ward_id))
+        ].copy()
+        if not extra.empty:
+            data = pd.concat(
+                [
+                    data.loc[:, list(RAW_COLUMNS)].copy(),
+                    extra.loc[:, list(RAW_COLUMNS)].copy(),
+                ],
+                ignore_index=True,
+            )
+            data = engineer_features(data)
+            data = data.sort_values(["ward_id", "date"], kind="stable").reset_index(drop=True)
     ward = data.loc[
         data.city.astype(str).eq(str(city))
         & data.ward_id.astype(str).eq(str(ward_id))
@@ -204,19 +225,33 @@ def predict_live(
     # Static ward-level values are taken from the latest stored row. They do not
     # need to be re-entered by the user every week.
     latest = ward.iloc[-1]
+    if static_context is not None:
+        latest_static = {
+            "population_density_sqkm": float(static_context["populationDensity"]),
+            "water_logging_risk_index": float(static_context["waterLoggingRisk"]),
+            "sanitation_score": float(static_context["sanitationScore"]),
+        }
+    else:
+        latest_static = {
+            "population_density_sqkm": float(latest["population_density_sqkm"]),
+            "water_logging_risk_index": float(latest["water_logging_risk_index"]),
+            "sanitation_score": float(latest["sanitation_score"]),
+        }
     live_row = {
         "date": live_date,
         "city": str(city),
         "ward_id": str(ward_id),
-        "population_density_sqkm": float(latest["population_density_sqkm"]),
-        "water_logging_risk_index": float(latest["water_logging_risk_index"]),
-        "sanitation_score": float(latest["sanitation_score"]),
+        "population_density_sqkm": latest_static["population_density_sqkm"],
+        "water_logging_risk_index": latest_static["water_logging_risk_index"],
+        "sanitation_score": latest_static["sanitation_score"],
         "avg_temp_C": _validate_number("Average temperature", avg_temp_c),
         "max_temp_c": _validate_number("Maximum temperature", max_temp_c),
         "min_temp_c": _validate_number("Minimum temperature", min_temp_c),
         "rainfall_mm": _validate_number("Rainfall", rainfall_mm, 0.0),
         "relative_humidity_pct": _validate_number("Relative humidity", relative_humidity_pct, 0.0),
-        "dengue_cases": _validate_number("Current weekly dengue cases", dengue_cases, 0.0),
+        # Current-week dengue cases are not a live input or a feature. The
+        # model uses only case counts observed before this forecast origin.
+        "dengue_cases": np.nan,
     }
 
     # engineer_features() is deliberately reused here. This guarantees the
@@ -232,6 +267,15 @@ def predict_live(
     if len(live_features) != 1:
         raise LiveInputError("The live observation could not be converted into exactly one feature row")
     if not bool(usable_feature_mask(live_features).iloc[0]):
+        missing_case_history = any(
+            name.startswith("dengue_") and pd.isna(live_features.iloc[0][name])
+            for name in FEATURE_COLUMNS
+        )
+        if missing_case_history:
+            raise LiveInputError(
+                "Confirmed dengue history is incomplete for the recent weeks. "
+                "Update the historical dataset when those case reports are available, then retry."
+            )
         raise LiveInputError(
             "The live observation does not have enough complete historical information to build all model features"
         )
@@ -287,9 +331,9 @@ def predict_live(
         "expectedFeatureCount": len(FEATURE_COLUMNS),
         "featureContract": list(FEATURE_COLUMNS),
         "staticContext": {
-            "populationDensity": float(latest["population_density_sqkm"]),
-            "waterLoggingRisk": float(latest["water_logging_risk_index"]),
-            "sanitationScore": float(latest["sanitation_score"]),
+            "populationDensity": latest_static["population_density_sqkm"],
+            "waterLoggingRisk": latest_static["water_logging_risk_index"],
+            "sanitationScore": latest_static["sanitation_score"],
         },
         "liveInput": {
             "avgTempC": live_row["avg_temp_C"],
@@ -297,11 +341,14 @@ def predict_live(
             "minTempC": live_row["min_temp_c"],
             "rainfallMm": live_row["rainfall_mm"],
             "humidityPct": live_row["relative_humidity_pct"],
-            "dengueCases": live_row["dengue_cases"],
+            "caseCountsProvided": False,
         },
         "drivers": describe_drivers(ward, pd.Series(live_row)),
         "history": [
-            {"date": pd.Timestamp(r.date).date().isoformat(), "cases": float(r.dengue_cases)}
+            {
+                "date": pd.Timestamp(r.date).date().isoformat(),
+                "cases": float(r.dengue_cases) if pd.notna(r.dengue_cases) else None,
+            }
             for r in history.itertuples(index=False)
         ],
         "forecast": [{"date": target_date.date().isoformat(), "cases": predicted_cases}],
