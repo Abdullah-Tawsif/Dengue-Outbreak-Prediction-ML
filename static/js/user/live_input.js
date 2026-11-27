@@ -125,6 +125,8 @@ form.addEventListener("submit", async (event) => {
         document.getElementById("artifactInfo").textContent = `Run: ${data.experimentId} · training data through ${formatDate(data.modelTrainingDataThrough)}.`;
         result.hidden = false;
         result.scrollIntoView({ behavior: "smooth", block: "start" });
+
+        renderOperations(data.operations);
         setMessage("Live early warning generated successfully.");
     } catch (error) {
         setMessage(error.message, true);
@@ -133,3 +135,97 @@ form.addEventListener("submit", async (event) => {
         predictButton.textContent = "Run live early warning →";
     }
 });
+
+function renderOperations(ops) {
+    const section = document.getElementById("operations");
+    if (!ops) {
+        section.hidden = true;
+        return;
+    }
+    section.hidden = false;
+
+    const roiBadge = document.getElementById("roiBadge");
+    roiBadge.textContent = ops.roi.rank;
+    roiBadge.dataset.rank = ops.roi.rank;
+
+    document.getElementById("opsDisclaimer").textContent = ops.disclaimer;
+
+    const saline = ops.supply.salineBags;
+    const kits = ops.supply.diagnosticKits;
+    document.getElementById("supplySaline").innerHTML = supplyRowHtml(
+        "Saline bags", saline.needed, saline.inStock, saline.remaining, saline.status
+    );
+    document.getElementById("supplyKits").innerHTML = supplyRowHtml(
+        "Diagnostic kits", kits.needed, kits.inStock, kits.remaining, kits.status
+    );
+
+    const controls = document.getElementById("scarcityControls");
+    controls.innerHTML = (ops.supply.controls || [])
+        .map((c) => `<li>${c}</li>`).join("") || "<li class='muted'>No scarcity controls needed.</li>";
+
+    const beds = ops.bedAllocation;
+    document.getElementById("bedStats").innerHTML = `
+        <div class="stat-line"><span>Peak beds needed</span><strong>${beds.peakBedsNeeded}</strong></div>
+        <div class="stat-line"><span>Ward bed capacity</span><strong>${beds.wardBedCapacity}</strong></div>
+        <div class="stat-line"><span>Allocated locally</span><strong>${beds.allocatedLocally}</strong></div>
+        <div class="stat-line"><span>Overflow</span><strong>${beds.overflow}</strong></div>
+        <div class="stat-line"><span>Unallocated</span><strong>${beds.unallocated}</strong></div>
+    `;
+
+    const routing = document.getElementById("overflowRouting");
+    if (beds.overflowRouting && beds.overflowRouting.length > 0) {
+        routing.innerHTML = `
+            <p class="routing-title">Same-city overflow routing</p>
+            ${beds.overflowRouting.map((r) => `
+                <div class="routing-row"><span>→ ${r.toWard}</span><strong>${r.beds} beds</strong></div>
+            `).join("")}
+        `;
+    } else if (beds.overflow > 0) {
+        routing.innerHTML = `<p class="routing-title warning">Overflow cannot be routed within the city — consider inter-city transfer.</p>`;
+    } else {
+        routing.innerHTML = `<p class="routing-title muted">No overflow needed.</p>`;
+    }
+
+    document.getElementById("cityUtilisation").innerHTML = `
+        <p class="utilisation-title">City-wide bed utilisation</p>
+        <div class="utilisation-bar">
+            <div class="utilisation-fill" style="width:${Math.min(100, beds.cityWideUtilisation * 100)}%"></div>
+        </div>
+        <p class="utilisation-label">${moneylessNumber(beds.cityWideUtilisation * 100, 0)}% of ${beds.totalCityBeds} beds in ${beds.city}</p>
+    `;
+
+    const crews = ops.crewDeployment;
+    document.getElementById("crewStats").innerHTML = `
+        <div class="stat-line"><span>Field crews</span><strong>${crews.fieldCrews}</strong></div>
+        <div class="stat-line"><span>Deployment days</span><strong>${crews.deploymentDays}</strong></div>
+        <div class="stat-line"><span>Estimated cost</span><strong>${moneylessNumber(crews.costEstimate, 0)}</strong></div>
+        <div class="stat-line"><span>Priority tier</span><strong>${crews.priority}/4</strong></div>
+    `;
+
+    const cf = ops.counterfactual;
+    document.getElementById("counterfactualStats").innerHTML = `
+        <div class="stat-line"><span>No-intervention cases</span><strong>${moneylessNumber(cf.noInterventionCases, 0)}</strong></div>
+        <div class="stat-line"><span>With-intervention cases</span><strong>${moneylessNumber(cf.interventionCases, 0)}</strong></div>
+        <div class="stat-line"><span>Cases averted</span><strong>${moneylessNumber(cf.casesAverted, 0)}</strong></div>
+        <p class="assumption-note">${cf.assumption}</p>
+    `;
+
+    const roi = ops.roi;
+    document.getElementById("roiStats").innerHTML = `
+        <div class="stat-line"><span>Total intervention cost</span><strong>${moneylessNumber(roi.totalCost, 0)}</strong></div>
+        <div class="stat-line"><span>Est. cases averted</span><strong>${moneylessNumber(roi.estimatedCasesAverted, 0)}</strong></div>
+        <div class="stat-line"><span>Value of averted burden</span><strong>${moneylessNumber(roi.valueAverted, 0)}</strong></div>
+        <div class="stat-line"><span>ROI</span><strong>${roi.roiLabel} (${moneylessNumber(roi.roi, 2)}x)</strong></div>
+    `;
+}
+
+function supplyRowHtml(label, needed, stock, remaining, status) {
+    return `
+        <div class="supply-head"><span>${label}</span><span class="status-chip" data-status="${status}">${status}</span></div>
+        <div class="supply-bars">
+            <div class="supply-bar"><span>Needed</span><strong>${moneylessNumber(needed, 0)}</strong></div>
+            <div class="supply-bar"><span>In stock</span><strong>${moneylessNumber(stock, 0)}</strong></div>
+            <div class="supply-bar"><span>Remaining</span><strong>${moneylessNumber(remaining, 0)}</strong></div>
+        </div>
+    `;
+}

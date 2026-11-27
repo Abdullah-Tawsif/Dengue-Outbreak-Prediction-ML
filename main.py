@@ -104,6 +104,18 @@ elif PREDICTION_BACKEND == "phase2":
 else:
     raise RuntimeError("PREDICTION_BACKEND must be 'reference_catboost' or 'phase2'.")
 from src.feature_engineering import SUPPORTED_HORIZONS
+from src.live_input_predict import (
+    LiveInputError,
+    LiveModelUnavailableError,
+    get_live_areas,
+    get_live_defaults,
+    predict_live,
+)
+from src.operations import (
+    WardForecast,
+    build_operational_plan,
+    default_city_capacities,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -222,6 +234,144 @@ async def predict_ward(
 
 
 # --------------------------------------------------
+# LIVE INPUT EARLY WARNING SYSTEM
+# --------------------------------------------------
+
+
+class LiveForecastRequest(BaseModel):
+    city: str = Field(min_length=1, max_length=100)
+    ward: str = Field(min_length=1, max_length=100)
+    observationDate: date
+    horizonWeeks: int = Field(ge=2, le=4)
+    avgTempC: float
+    maxTempC: float
+    minTempC: float
+    rainfallMm: float = Field(ge=0.0)
+    humidityPct: float = Field(ge=0.0, le=100.0)
+    dengueCases: float = Field(ge=0.0)
+
+
+@app.get("/api/live-input/areas")
+async def live_input_areas(
+    current_user: User = Depends(get_current_hospital_user),
+):
+    """Return the city→ward map supported by the live input pipeline."""
+    try:
+        areas = get_live_areas()
+    except (LiveInputError, LiveModelUnavailableError) as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    return {"areas": areas}
+
+
+@app.get("/api/live-input/defaults")
+async def live_input_defaults(
+    city: str = Query(min_length=1, max_length=100),
+    ward: str = Query(min_length=1, max_length=100),
+    current_user: User = Depends(get_current_hospital_user),
+):
+    """Return static ward context and the next expected weekly input date."""
+    try:
+        defaults = get_live_defaults(city, ward)
+    except LiveInputError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except (LiveModelUnavailableError, FileNotFoundError) as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    return defaults
+
+
+@app.post("/api/live-predict")
+async def live_predict(
+    payload: LiveForecastRequest,
+    request: Request,
+    x_csrf_token: str = Header(default=""),
+    current_user: User = Depends(get_current_hospital_user),
+    db: Session = Depends(get_db),
+):
+    """Run a live-input CatBoost forecast and attach a full operational plan."""
+    request_id = uuid.uuid4().hex
+    if not verify_csrf_token(request, x_csrf_token):
+        raise HTTPException(status_code=403, detail="Invalid or missing CSRF token.")
+    if payload.horizonWeeks not in SUPPORTED_HORIZONS:
+        raise HTTPException(
+            status_code=422,
+            detail=f"Unsupported forecast horizon; choose one of {SUPPORTED_HORIZONS} weeks.",
+        )
+    try:
+        result = predict_live(
+            city=payload.city,
+            ward_id=payload.ward,
+            observation_date=payload.observationDate,
+            horizon_weeks=payload.horizonWeeks,
+            avg_temp_c=payload.avgTempC,
+            max_temp_c=payload.maxTempC,
+            min_temp_c=payload.minTempC,
+            rainfall_mm=payload.rainfallMm,
+            relative_humidity_pct=payload.humidityPct,
+            dengue_cases=payload.dengueCases,
+        )
+        result["requestId"] = request_id
+
+        # Attach the operational plan (supply, beds, crew, counterfactual, ROI).
+        ward_forecast = WardForecast(
+            city=result["city"],
+            ward_id=result["wardId"],
+            horizon_weeks=result["horizonWeeks"],
+            observation_date=result["observationDate"],
+            target_date=result["targetDate"],
+            predicted_cases=result["predictedCases"],
+            risk_category=result["riskCategory"],
+            early_warning=result["earlyWarning"],
+        )
+        try:
+            result["operations"] = build_operational_plan(ward_forecast)
+        except Exception as exc:
+            logger.warning("operational plan failed request_id=%s: %s", request_id, exc)
+            result["operations"] = None
+
+        from src.backend.audit import record_audit_event
+        record_audit_event(
+            db,
+            "live_prediction",
+            (
+                f"Live forecast: {result['city']}/{result['wardId']} "
+                f"{result['horizonWeeks']}w → {result['predictedCases']} cases "
+                f"({result['riskCategory']})"
+            ),
+            current_user.id,
+        )
+
+        logger.info(
+            "live forecast request_id=%s city=%s ward=%s horizon=%s origin=%s "
+            "predicted=%s risk=%s early_warning=%s",
+            request_id, result.get("city"), result.get("wardId"),
+            result.get("horizonWeeks"), result.get("observationDate"),
+            result.get("predictedCases"), result.get("riskCategory"),
+            result.get("earlyWarning"),
+        )
+        return result
+    except LiveInputError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except LiveModelUnavailableError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    except (FileNotFoundError,) as exc:
+        raise HTTPException(
+            status_code=503,
+            detail="A compatible forecasting model or required data is unavailable.",
+        ) from exc
+    except (LookupError, ValueError) as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except Exception as exc:
+        logger.exception(
+            "live forecast failed request_id=%s city=%s ward=%s horizon=%s",
+            request_id, payload.city, payload.ward, payload.horizonWeeks,
+        )
+        raise HTTPException(
+            status_code=500,
+            detail="Live prediction failed because the model or data could not be used.",
+        ) from exc
+
+
+# --------------------------------------------------
 # AUTHENTICATION ROUTER
 # --------------------------------------------------
 
@@ -316,6 +466,37 @@ async def user_dashboard(
             "data_through": data_through,
             "freshness": freshness,
             "date_bounds": date_bounds,
+        },
+        headers={"Cache-Control": "no-store, private"},
+    )
+
+
+# --------------------------------------------------
+# LIVE INPUT EARLY WARNING PAGE
+# --------------------------------------------------
+
+@app.get("/live-input")
+async def live_input_page(
+    request: Request,
+    current_user: User = Depends(get_current_hospital_user),
+):
+    """Render the live weekly-input early warning page."""
+    csrf_token = get_csrf_token(request)
+    data_error = None
+    try:
+        areas = get_live_areas()
+    except (LiveInputError, LiveModelUnavailableError, FileNotFoundError):
+        areas = {}
+        data_error = "Live input data is unavailable. Check the server configuration."
+
+    return templates.TemplateResponse(
+        request=request,
+        name="user/live_input.html",
+        context={
+            "current_user": current_user,
+            "csrf_token": csrf_token,
+            "areas": areas,
+            "data_error": data_error,
         },
         headers={"Cache-Control": "no-store, private"},
     )
