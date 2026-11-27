@@ -21,7 +21,7 @@ Here is a preview of the AEDISIGHT dengue outbreak prediction platform.
 ![Analytics](assets/images/UI_PIC_1%28test_forecast_zoomed_out_2%29.png)
 
 ### 5. Admin Dashboard
-![Admin Dashboard](assets/images/UI_PIC_1%28admin_UI%29.png)
+![Admin Dashboard](assets/images/UI_PIC_1%28admin_UI.png)
 
 | | |
 |---|---|
