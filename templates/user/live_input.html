@@ -15,7 +15,10 @@
 <main class="page-shell">
   <header class="topbar">
     <a href="/user_dashboard" class="brand">AEDISIGHT <span>LIVE EARLY WARNING</span></a>
-    <a href="/user_dashboard" class="back-link">← Dashboard</a>
+    <nav class="top-links">
+      <a href="/exports" class="back-link">Operations exports</a>
+      <a href="/user_dashboard" class="back-link">← Dashboard</a>
+    </nav>
   </header>
 
   <section class="hero">
@@ -120,6 +123,13 @@
             <input id="totalSprayingCrews" type="number" min="0" max="500" step="1" value="0">
           </label>
           <small>Stock is simulated as a share of calculated saline and kit demand. Bed capacity comes from ward records.</small>
+        </div>
+        <div class="dispatch-actions" id="dispatchActions" hidden>
+          <strong>Review notification drafts</strong>
+          <span>Messages are opened in your chosen app only; AEDISIGHT does not send them.</span>
+          <a id="smsDraftLink">Open SMS draft</a>
+          <a id="whatsappDraftLink" target="_blank" rel="noopener noreferrer">Open WhatsApp draft</a>
+          <a id="commissionerBriefLink">Printable commissioner brief</a>
         </div>
         <div id="operationsSummary">Generating scenario summary…</div>
       </div>

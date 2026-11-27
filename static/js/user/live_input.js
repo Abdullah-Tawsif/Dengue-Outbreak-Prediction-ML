@@ -35,6 +35,7 @@ function setMessage(text, error = false) {
 
 async function loadOperations(selectedCity, useScenarioControls = false) {
     const summary = document.getElementById("operationsSummary");
+    const dispatchActions = document.getElementById("dispatchActions");
     try {
         const params = new URLSearchParams({ city: selectedCity });
         if (useScenarioControls) {
@@ -47,6 +48,18 @@ async function loadOperations(selectedCity, useScenarioControls = false) {
         });
         const data = await response.json();
         if (!response.ok) throw new Error(data.detail || "Operational status unavailable.");
+        const draftQuery = new URLSearchParams({ city: selectedCity });
+        if (useScenarioControls) {
+            draftQuery.set("availableStockPercent", stockPercent.value);
+            draftQuery.set("totalSprayingCrews", totalSprayingCrews.value || "0");
+        }
+        document.getElementById("smsDraftLink").href =
+            `sms:?body=${encodeURIComponent(data.dispatchDrafts.sms)}`;
+        const whatsappLink = document.getElementById("whatsappDraftLink");
+        whatsappLink.href = `https://wa.me/?text=${encodeURIComponent(data.dispatchDrafts.whatsapp)}`;
+        document.getElementById("commissionerBriefLink").href =
+            `/exports/commissioner-brief?${draftQuery.toString()}`;
+        dispatchActions.hidden = false;
         if (!scenarioControlsInitialized) {
             stockPercent.value = String(data.scarcityControls.availableStockPercent);
             totalSprayingCrews.value = String(data.scarcityControls.totalSprayingCrews);
@@ -172,6 +185,7 @@ async function loadOperations(selectedCity, useScenarioControls = false) {
         }
         addLine("Demand ratios are planning assumptions, not validated clinical coefficients. Routing and crew assignments are recommendations, not dispatch orders.");
     } catch (error) {
+        dispatchActions.hidden = true;
         summary.textContent = error.message;
     }
 }

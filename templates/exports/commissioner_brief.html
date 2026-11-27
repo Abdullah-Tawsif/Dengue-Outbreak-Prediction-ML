@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Commissioner operations brief — {{ status.city }}</title>
+  <style>
+    body { max-width: 980px; margin: 32px auto; padding: 0 22px; color: #20242c; font: 14px/1.55 system-ui, sans-serif; }
+    h1, h2 { line-height: 1.2; }
+    h1 { margin-bottom: 4px; }
+    .muted { color: #5d6570; }
+    .actions { display: flex; flex-wrap: wrap; gap: 12px; margin: 22px 0; }
+    .actions a, .actions button { padding: 9px 13px; border: 1px solid #87909c; border-radius: 6px; color: #20242c; background: white; font: inherit; text-decoration: none; cursor: pointer; }
+    section { margin: 26px 0; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 8px; border: 1px solid #cbd0d7; text-align: left; }
+    th { background: #f0f2f5; }
+    .notice { padding: 12px; border-left: 4px solid #9a6a00; background: #fff8df; }
+    @media print { @page { size: landscape; } body { max-width: none; margin: 0; padding: 0; } .actions { display: none; } }
+  </style>
+</head>
+<body>
+  <header>
+    <p class="muted">AEDISIGHT · Operational decision support</p>
+    <h1>Commissioner operations brief</h1>
+    <p><strong>Area:</strong> {{ status.city }} · <strong>Generated:</strong> {{ generated_at }}</p>
+  </header>
+  <nav class="actions" aria-label="Export actions">
+    <button type="button" onclick="window.print()">Print / save as PDF</button>
+    <a href="{{ csv_url }}">Download CSV</a>
+    <a href="{{ json_url }}">Download JSON</a>
+    <a href="{{ sms_url }}">Open SMS draft</a>
+    <a href="{{ whatsapp_url }}" target="_blank" rel="noopener noreferrer">Open WhatsApp draft</a>
+  </nav>
+  <p class="notice">Forecasts and allocations are planning scenarios only. Verify local conditions and capacity before action; this brief is not a confirmed dispatch, admission, or clinical order.</p>
+  <section>
+    <h2>Situation summary</h2>
+    <p>Saved forecast status: <strong>{{ status.status }}</strong>. Regional supply deficit: <strong>{% if status.status == "available" %}{{ "yes" if status.resourceAllocation.criticalSupplyDeficit else "no reported deficit" }}{% else %}unknown — no saved live forecasts{% endif %}</strong>. Projected bed demand not routed: <strong>{% if status.status == "available" %}{{ status.bedAllocation.unallocatedDemand }}{% else %}unknown{% endif %}</strong>.</p>
+    {% if status.cityBedUtilization %}
+    <table>
+      <thead><tr><th>City</th><th>Projected bed utilization</th><th>Capacity coverage</th><th>Net bed deficit</th></tr></thead>
+      <tbody>{% for item in status.cityBedUtilization %}
+        <tr><td>{{ item.city }}</td><td>{% if item.bedUtilizationPercent is not none %}{{ item.bedUtilizationPercent }}%{% else %}Unknown{% endif %}</td><td>{{ item.capacityCoveragePercent }}%</td><td>{{ item.netBedDeficit }}</td></tr>
+      {% endfor %}</tbody>
+    </table>
+    {% else %}<p>No capacity summary is available yet.</p>{% endif %}
+  </section>
+  <section>
+    <h2>Ward forecast and resources</h2>
+    <table>
+      <thead><tr><th>Ward</th><th>Risk</th><th>Projected cases</th><th>Saline needed / allocated</th><th>Saline deficit</th><th>Kits needed / allocated</th><th>Kit deficit</th><th>Bed demand</th><th>Available beds</th><th>Net bed deficit</th></tr></thead>
+      <tbody>{% for ward in status.supplies %}
+        {% set bed = namespace(row=None) %}
+        {% for candidate in status.bedAllocation.wards %}{% if candidate.city == ward.city and candidate.wardId == ward.wardId %}{% set bed.row = candidate %}{% endif %}{% endfor %}
+        <tr>
+          <td>{{ ward.wardId }}</td><td>{{ ward.riskCategory|default("Unknown") }}</td>
+          <td>{{ "%.0f"|format(ward.predictedCases) }}</td>
+          <td>{{ ward.saline_bags_needed }} / {{ ward.saline_bags_allocated if ward.saline_bags_allocated is not none else "Unknown" }}</td>
+          <td>{{ ward.saline_bags_deficit if ward.saline_bags_deficit is not none else "Unknown" }}</td>
+          <td>{{ ward.diagnostic_kits_needed }} / {{ ward.diagnostic_kits_allocated if ward.diagnostic_kits_allocated is not none else "Unknown" }}</td>
+          <td>{{ ward.diagnostic_kits_deficit if ward.diagnostic_kits_deficit is not none else "Unknown" }}</td>
+          <td>{{ ward.hospital_beds_required }}</td>
+          <td>{{ bed.row.availableBeds if bed.row and bed.row.availableBeds is not none else "Unknown" }}</td>
+          <td>{{ bed.row.netBedDeficit if bed.row and bed.row.netBedDeficit is not none else "Unknown" }}</td>
+        </tr>
+      {% else %}
+        <tr><td colspan="10">No saved live forecasts are available for this area.</td></tr>
+      {% endfor %}</tbody>
+    </table>
+  </section>
+  <section>
+    <h2>Ward-to-ward overflow suggestions</h2>
+    {% if status.overflow.routes %}
+    <ul>{% for route in status.overflow.routes %}
+      <li>{{ route.sourceWardId }} to {{ route.destinationWardId }} ({{ route.bedsRouted }} beds; same-city planning suggestion)</li>
+    {% endfor %}</ul>
+    {% else %}<p>No same-city overflow routes are currently suggested.</p>{% endif %}
+  </section>
+  <section>
+    <h2>Limitations</h2>
+    <ul>{% for limitation in status.limitations %}<li>{{ limitation }}</li>{% endfor %}</ul>
+  </section>
+</body>
+</html>

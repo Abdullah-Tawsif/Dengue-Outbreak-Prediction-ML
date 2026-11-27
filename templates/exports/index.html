@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AEDISIGHT — Operations exports</title>
+  <style>
+    body { max-width: 760px; margin: 48px auto; padding: 0 20px; color: #20242c; font: 16px/1.6 system-ui, sans-serif; }
+    label { display: grid; gap: 6px; max-width: 420px; margin: 20px 0; }
+    input, button { padding: 10px; font: inherit; }
+    ul { padding-left: 22px; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Operations exports</h1>
+    <p>Generate printable decision support or download the current operational snapshot.</p>
+    <form action="/exports" method="get">
+      <label>City (leave blank for all available cities)
+        <input name="city" value="{{ city }}" maxlength="100">
+      </label>
+      <button type="submit">Update export links</button>
+    </form>
+    <ul>
+      <li><a href="{{ brief_url }}">Printable commissioner brief</a></li>
+      <li><a href="{{ csv_url }}">Download operations CSV</a></li>
+      <li><a href="{{ json_url }}">Download operations JSON</a></li>
+    </ul>
+    <p>Exports are generated from saved forecasts and configured capacity. They are planning scenarios, not confirmed dispatch, admission, or clinical orders.</p>
+  </main>
+</body>
+</html>

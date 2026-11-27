@@ -160,3 +160,48 @@ def test_admin_can_save_local_ward_bed_capacity(operations_client):
         ).one()
         assert record.total_beds == 40
         assert record.occupied_beds == 32
+
+
+def test_dispatch_drafts_and_operations_exports_use_saved_scenarios(operations_client):
+    client, _ = operations_client
+    params = {"city": "Dhaka North", "availableStockPercent": 30}
+
+    drafts = client.get("/api/operations/dispatch-drafts", params=params)
+    assert drafts.status_code == 200
+    assert drafts.json()["status"] == "draft"
+    assert drafts.json()["sent"] is False
+    assert "Surge (HIGH): 40 projected cases" in drafts.json()["sms"]
+    assert "does not transmit messages" in drafts.json()["note"]
+
+    exports_page = client.get("/exports", params={"city": "Dhaka North"})
+    assert exports_page.status_code == 200
+    assert "/exports/commissioner-brief?city=Dhaka+North" in exports_page.text
+
+    brief = client.get("/exports/commissioner-brief", params=params)
+    assert brief.status_code == 200
+    assert "Commissioner operations brief" in brief.text
+    assert "Surge" in brief.text
+    assert "Print / save as PDF" in brief.text
+
+    csv_export = client.get("/exports/operations.csv", params=params)
+    assert csv_export.status_code == 200
+    assert "text/csv" in csv_export.headers["content-type"]
+    assert "saline_bags_needed" in csv_export.text
+    assert "Surge" in csv_export.text
+
+    json_export = client.get("/exports/operations.json", params=params)
+    assert json_export.status_code == 200
+    assert json_export.json()["city"] == "Dhaka North"
+    assert json_export.json()["dispatchDrafts"]["sent"] is False
+
+
+def test_commissioner_brief_labels_deficits_unknown_without_live_forecasts(operations_client):
+    client, sessions = operations_client
+    with sessions() as db:
+        db.query(LivePrediction).delete()
+        db.commit()
+
+    brief = client.get("/exports/commissioner-brief", params={"city": "Dhaka North"})
+    assert brief.status_code == 200
+    assert "unknown — no saved live forecasts" in brief.text
+    assert "Projected bed demand not routed: <strong>unknown</strong>" in brief.text

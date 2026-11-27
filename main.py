@@ -4,9 +4,13 @@
 import os
 import logging
 import uuid
-from datetime import date
+import csv
+import io
+import json
+from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Optional
+from urllib.parse import quote, urlencode
 
 from dotenv import load_dotenv
 import pandas as pd
@@ -18,6 +22,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent
 load_dotenv(PROJECT_ROOT / ".env", override=False)
 
 from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request
+from fastapi.responses import Response
 from sqlalchemy import func, inspect, text
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
@@ -124,6 +129,7 @@ from src.live_input_predict import (
 )
 from src.operations import (
     allocate_regional_stock,
+    build_dispatch_drafts,
     calculate_supply,
     plan_crews,
     rank_priority,
@@ -1060,7 +1066,7 @@ async def operations_status(
 
     supplies = list(supplies_by_key.values())
 
-    return {
+    response_data = {
         "status": "available" if latest_by_ward else "no-live-predictions",
         "city": city or "all",
         "supplies": supplies,
@@ -1089,6 +1095,175 @@ async def operations_status(
             "Bed and crew recommendations are planning scenarios, not confirmed dispatch or admission orders.",
         ],
     }
+    response_data["dispatchDrafts"] = build_dispatch_drafts(response_data)
+    return response_data
+
+
+@app.get("/api/operations/dispatch-drafts")
+async def operations_dispatch_drafts(
+    city: str = Query(default="", max_length=100),
+    available_stock_percent: int = Query(default=100, alias="availableStockPercent", ge=30, le=100),
+    total_spraying_crews: Optional[int] = Query(default=None, alias="totalSprayingCrews", ge=0, le=500),
+    current_user: User = Depends(get_current_hospital_user),
+    db: Session = Depends(get_db),
+):
+    """Return user-reviewed SMS and WhatsApp text; no message is sent."""
+    status = await operations_status(
+        city=city,
+        available_stock_percent=available_stock_percent,
+        total_spraying_crews=total_spraying_crews,
+        current_user=current_user,
+        db=db,
+    )
+    return status["dispatchDrafts"]
+
+
+def _csv_safe(value: object) -> str:
+    text_value = "" if value is None else str(value)
+    if text_value.lstrip(" \t\r\n").startswith(("=", "+", "-", "@")):
+        return f"'{text_value}"
+    return text_value
+
+
+@app.get("/exports")
+async def operations_exports_page(
+    request: Request,
+    city: str = Query(default="", max_length=100),
+    current_user: User = Depends(get_current_hospital_user),
+):
+    query = urlencode({"city": city}) if city else ""
+    suffix = f"?{query}" if query else ""
+    return templates.TemplateResponse(
+        request=request,
+        name="exports/index.html",
+        context={
+            "city": city,
+            "brief_url": f"/exports/commissioner-brief{suffix}",
+            "csv_url": f"/exports/operations.csv{suffix}",
+            "json_url": f"/exports/operations.json{suffix}",
+        },
+        headers={"Cache-Control": "no-store, private"},
+    )
+
+
+@app.get("/exports/commissioner-brief")
+async def commissioner_brief_export(
+    request: Request,
+    city: str = Query(default="", max_length=100),
+    available_stock_percent: int = Query(default=100, alias="availableStockPercent", ge=30, le=100),
+    total_spraying_crews: Optional[int] = Query(default=None, alias="totalSprayingCrews", ge=0, le=500),
+    current_user: User = Depends(get_current_hospital_user),
+    db: Session = Depends(get_db),
+):
+    status = await operations_status(
+        city=city,
+        available_stock_percent=available_stock_percent,
+        total_spraying_crews=total_spraying_crews,
+        current_user=current_user,
+        db=db,
+    )
+    export_params: dict[str, str | int] = {
+        "availableStockPercent": available_stock_percent
+    }
+    if city:
+        export_params["city"] = city
+    if total_spraying_crews is not None:
+        export_params["totalSprayingCrews"] = total_spraying_crews
+    export_query = urlencode(export_params)
+    return templates.TemplateResponse(
+        request=request,
+        name="exports/commissioner_brief.html",
+        context={
+            "status": status,
+            "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
+            "csv_url": f"/exports/operations.csv?{export_query}",
+            "json_url": f"/exports/operations.json?{export_query}",
+            "sms_url": f"sms:?body={quote(status['dispatchDrafts']['sms'])}",
+            "whatsapp_url": f"https://wa.me/?text={quote(status['dispatchDrafts']['whatsapp'])}",
+        },
+        headers={"Cache-Control": "no-store, private"},
+    )
+
+
+@app.get("/exports/operations.json")
+async def operations_json_export(
+    city: str = Query(default="", max_length=100),
+    available_stock_percent: int = Query(default=100, alias="availableStockPercent", ge=30, le=100),
+    total_spraying_crews: Optional[int] = Query(default=None, alias="totalSprayingCrews", ge=0, le=500),
+    current_user: User = Depends(get_current_hospital_user),
+    db: Session = Depends(get_db),
+):
+    status = await operations_status(
+        city=city,
+        available_stock_percent=available_stock_percent,
+        total_spraying_crews=total_spraying_crews,
+        current_user=current_user,
+        db=db,
+    )
+    return Response(
+        content=json.dumps(status, ensure_ascii=False, indent=2),
+        media_type="application/json",
+        headers={"Content-Disposition": 'attachment; filename="aedisight-operations.json"'},
+    )
+
+
+@app.get("/exports/operations.csv")
+async def operations_csv_export(
+    city: str = Query(default="", max_length=100),
+    available_stock_percent: int = Query(default=100, alias="availableStockPercent", ge=30, le=100),
+    total_spraying_crews: Optional[int] = Query(default=None, alias="totalSprayingCrews", ge=0, le=500),
+    current_user: User = Depends(get_current_hospital_user),
+    db: Session = Depends(get_db),
+):
+    status = await operations_status(
+        city=city,
+        available_stock_percent=available_stock_percent,
+        total_spraying_crews=total_spraying_crews,
+        current_user=current_user,
+        db=db,
+    )
+    beds_by_ward = {
+        (row["city"], row["wardId"]): row
+        for row in status["bedAllocation"]["wards"]
+    }
+    crews_by_ward = {
+        (row.get("city"), row["wardId"]): row
+        for row in status["crewDeployment"]["assignments"]
+    }
+    output = io.StringIO(newline="")
+    writer = csv.writer(output)
+    writer.writerow([
+        "city", "ward", "risk", "predicted_cases", "saline_bags_needed",
+        "saline_bags_allocated", "saline_bags_deficit",
+        "diagnostic_kits_needed", "diagnostic_kits_allocated",
+        "diagnostic_kits_deficit", "beds_needed", "available_beds",
+        "net_bed_deficit", "crews_assigned", "unmet_crew_need",
+    ])
+    for row in status["supplies"]:
+        bed = beds_by_ward.get((row["city"], row["wardId"]), {})
+        crew = crews_by_ward.get((row["city"], row["wardId"]), {})
+        writer.writerow([
+            _csv_safe(row["city"]),
+            _csv_safe(row["wardId"]),
+            _csv_safe(row.get("riskCategory")),
+            row.get("predictedCases", 0),
+            row.get("saline_bags_needed", 0),
+            row.get("saline_bags_allocated"),
+            row.get("saline_bags_deficit"),
+            row.get("diagnostic_kits_needed", 0),
+            row.get("diagnostic_kits_allocated"),
+            row.get("diagnostic_kits_deficit"),
+            row.get("hospital_beds_required", 0),
+            bed.get("availableBeds"),
+            bed.get("netBedDeficit"),
+            len(crew.get("assignedCrews", [])),
+            crew.get("unmetDeploymentNeed", 0),
+        ])
+    return Response(
+        content=output.getvalue(),
+        media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": 'attachment; filename="aedisight-operations.csv"'},
+    )
 
 
 @app.post("/api/admin/hospital-capacity")

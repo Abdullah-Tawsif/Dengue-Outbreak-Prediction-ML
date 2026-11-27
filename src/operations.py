@@ -366,6 +366,7 @@ def plan_crews(
                 assigned += 1
                 crew_names.append(crew_name)
         assignments.append({
+            **({"city": ward["city"]} if "city" in ward else {}),
             "wardId": ward["wardId"],
             "priorityScore": ward["priorityScore"],
             "assignedCrews": crew_names,
@@ -396,3 +397,59 @@ def rank_priority(ward: Mapping) -> float:
         + vulnerability * 0.20,
         4,
     )
+
+
+def build_dispatch_drafts(status: Mapping) -> dict:
+    """Create operator-reviewed SMS and WhatsApp text without sending messages."""
+    city = str(status.get("city") or "all areas")
+    wards = sorted(
+        status.get("supplies", []),
+        key=priority_key,
+        reverse=True,
+    )
+    highlighted = [
+        row for row in wards
+        if str(row.get("riskCategory", "")).upper() in {"HIGH", "CRITICAL"}
+    ][:3]
+    if not highlighted:
+        highlighted = wards[:3]
+
+    highlights = [
+        f'{row["wardId"]} ({row.get("riskCategory", "UNKNOWN")}): '
+        f'{int(round(float(row.get("predictedCases", 0))))} projected cases'
+        for row in highlighted
+    ]
+    focus = "; ".join(highlights) if highlights else "No live ward forecasts available"
+    sms = (
+        f"AEDISIGHT planning alert — {city}. {focus}. "
+        "Verify forecasts and local capacity before action. Recommendations only; "
+        "not a confirmed dispatch order."
+    )
+
+    has_forecasts = status.get("status") == "available"
+    critical_supply = bool(
+        status.get("resourceAllocation", {}).get("criticalSupplyDeficit")
+    )
+    supply_summary = (
+        ("yes" if critical_supply else "none reported")
+        if has_forecasts else "unknown (no saved live forecasts)"
+    )
+    unmet_beds = (
+        str(int(status.get("bedAllocation", {}).get("unallocatedDemand") or 0))
+        if has_forecasts else "unknown"
+    )
+    whatsapp = (
+        f"AEDISIGHT operational planning brief — {city}\n"
+        f"Priority wards: {focus}.\n"
+        f"Regional supply deficit: {supply_summary}.\n"
+        f"Projected bed demand not routed: {unmet_beds}.\n"
+        "Please verify forecasts, stock, and ward capacity with local teams. "
+        "This is decision support, not a confirmed dispatch or admission order."
+    )
+    return {
+        "status": "draft",
+        "sent": False,
+        "sms": sms,
+        "whatsapp": whatsapp,
+        "note": "Review and send using your device; AEDISIGHT does not transmit messages.",
+    }
