@@ -9,10 +9,10 @@ AEDISIGHT — Application Screenshots
 Here is a preview of the AEDISIGHT dengue outbreak prediction platform.
 
 ### 1. Main Dashboard
-![Main Dashboard](assets/images/UI_PIC_1%28user_1st_page%29.png)
+![Main Dashboard](assets/images/UI_PIC_1.png)
 
 ### 2. Hospital Dashboard
-![Hospital Dashboard](assets/images/UI_PIC_1.png)
+![Hospital Dashboard](assets/images/UI_PIC_1%28user_1st_page%29.png)
 
 ### 3. Dengue Prediction
 ![Dengue Prediction](assets/images/UI_PIC_1%28test_forecast_zoomed_out%29.png)
