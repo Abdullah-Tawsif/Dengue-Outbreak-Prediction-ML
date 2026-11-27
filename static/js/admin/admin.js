@@ -267,6 +267,51 @@
     }
   }
 
+  const wardCapacityForm = document.getElementById("wardCapacityForm");
+  wardCapacityForm?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const button = form.querySelector("button[type='submit']");
+    const message = document.getElementById("wardCapacityMessage");
+    const csrfToken = document.querySelector(".logout-form input[name='csrf_token']")?.value;
+    const formData = new FormData(form);
+    if (button) button.disabled = true;
+    if (message) {
+      message.textContent = "Saving ward bed capacity…";
+      message.dataset.error = "false";
+    }
+    try {
+      const response = await fetch("/api/admin/ward-bed-capacity", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": csrfToken || "",
+          "Accept": "application/json",
+        },
+        credentials: "same-origin",
+        body: JSON.stringify({
+          city: formData.get("city"),
+          wardId: formData.get("wardId"),
+          totalBeds: Number(formData.get("totalBeds")),
+          occupiedBeds: Number(formData.get("occupiedBeds")),
+        }),
+      });
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.detail || "Could not save ward capacity.");
+      if (message) {
+        message.textContent = `${payload.city} · ${payload.wardId}: ${payload.availableBeds} beds available.`;
+        message.dataset.error = "false";
+      }
+    } catch (error) {
+      if (message) {
+        message.textContent = error.message;
+        message.dataset.error = "true";
+      }
+    } finally {
+      if (button) button.disabled = false;
+    }
+  });
+
   loadUsers();
   loadSummary();
   loadSystemStatus();
