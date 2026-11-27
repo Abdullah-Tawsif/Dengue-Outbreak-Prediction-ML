@@ -117,6 +117,9 @@
             <strong>{{ current_user.full_name }}</strong>
             <span>Administrator</span>
           </div>
+          <span class="header-avatar" aria-hidden="true">
+            {{ current_user.full_name[:2]|upper }}
+          </span>
         </div>
       </header>
 
