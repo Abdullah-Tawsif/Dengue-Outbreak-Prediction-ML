@@ -24,7 +24,7 @@ def raw_rows(wards=('A',), start='2025-06-02', weeks=20):
 def test_reference_features_are_ordered_and_have_supported_columns():
     data=engineer_features(raw_rows())
     assert list(data.loc[:, FEATURE_COLUMNS].columns)==FEATURE_COLUMNS
-    assert {'dengue_change_1w','dengue_growth_ratio_2w','dengue_mean_prev_8w',
+    assert {'dengue_change_prev_1w','dengue_growth_ratio_prev_2w','dengue_mean_prev_8w',
             'rainfall_sum_prev_8w','avg_temp_mean_prev_8w','humidity_mean_prev_8w',
             'week_sin','month_cos'} <= set(FEATURE_COLUMNS)
     assert usable_feature_mask(data).any()
@@ -44,6 +44,20 @@ def test_features_do_not_use_future_rows():
     left=engineer_features(base).set_index('date').loc[pd.Timestamp('2025-07-28'), FEATURE_COLUMNS]
     right=engineer_features(changed).set_index('date').loc[pd.Timestamp('2025-07-28'), FEATURE_COLUMNS]
     pd.testing.assert_series_equal(left,right)
+
+
+def test_current_week_case_count_is_not_a_model_feature():
+    base = raw_rows(weeks=15)
+    changed = base.copy()
+    changed.loc[changed.index[-1], "dengue_cases"] = 999999
+    left = engineer_features(base).iloc[-1][FEATURE_COLUMNS]
+    right = engineer_features(changed).iloc[-1][FEATURE_COLUMNS]
+    pd.testing.assert_series_equal(left, right)
+
+    missing_current_case = base.copy()
+    missing_current_case.loc[missing_current_case.index[-1], "dengue_cases"] = np.nan
+    latest = engineer_features(missing_current_case)
+    assert usable_feature_mask(latest).iloc[-1]
 
 
 def test_missing_source_columns_fail_clearly():
