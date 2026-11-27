@@ -26,8 +26,8 @@ from src.reference_catboost_features import (
     engineer_features,
     usable_feature_mask,
 )
+from src.model_contract import display_case_count
 from src.risk_engine import classify_risk, describe_drivers
-from src.train import display_case_count
 
 ROOT = Path(__file__).resolve().parents[1]
 DATA_PATH = ROOT / "data" / "processed" / "processed_historical_data.csv"

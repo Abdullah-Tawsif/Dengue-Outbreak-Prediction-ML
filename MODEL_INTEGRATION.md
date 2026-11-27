@@ -19,7 +19,7 @@ models/catboost_model_4w.joblib
 
 ## Run locally
 1. Ensure `.env` exists and has a valid `SESSION_SECRET` (at least 32 characters) and database settings.
-2. Install dependencies: `pip install -r requirements.txt`.
+2. Install development and training dependencies: `pip install -r requirements-dev.txt`.
 3. Start from the repository root: `uvicorn main:app --reload`.
 4. Sign in as a hospital user and open `/user_dashboard`.
 5. Select a city, ward and 2 or 4 weeks, then generate the forecast.

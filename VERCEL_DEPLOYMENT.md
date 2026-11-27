@@ -34,9 +34,20 @@ account through the team's approved secure process after deployment.
 3. Keep the project root at the repository root (`phase2-main` contents, not a
    parent folder).
 4. Do not add a custom Build Command or Output Directory. Let Vercel detect the
-   FastAPI application from `main.py` and `requirements.txt`.
+   FastAPI application from `main.py` and dependencies in `pyproject.toml`.
 5. Deploy first as a Preview if the team wants to validate environment values
    before assigning the Production domain.
+
+The Vercel `pyproject.toml` excludes CatBoost's plotting-only dependencies and
+keeps scikit-learn, tests, and migration tooling out of the function. Prediction
+has been smoke-tested without those packages; SciPy, NumPy, pandas, CatBoost,
+and the active reference-model/data artifacts remain included. This Vercel
+deployment uses the default `reference_catboost` backend. The optional Phase2
+backend remains available in local development through the `phase2` extra in
+`pyproject.toml` and `requirements-dev.txt`; enabling it on Vercel requires
+scikit-learn and a fresh bundle-size check. `vercel.json` excludes inactive runs
+and non-runtime files. Use `requirements-dev.txt` for local training,
+migrations, and tests.
 
 ## 4. Configure Environment Variables
 
@@ -50,6 +61,7 @@ appropriate Preview and Production environments:
 | `SESSION_SECRET` | A fresh random secret of at least 32 characters (secret) |
 | `COOKIE_SECURE` | `true` |
 | `SESSION_MAX_AGE` | `3600` |
+| `PREDICTION_BACKEND` | `reference_catboost` |
 
 Generate a secret locally with:
 
@@ -88,7 +100,9 @@ settings, missing `SESSION_SECRET`, or omitted runtime dependencies.
 
 ## 6. Data and model status caveat
 
-The checked-in processed dengue dataset ends on 2025-12-29. The application
+The active model artifacts are in
+`runs/reference_catboost_20261127T095240_866358Z/`. The checked-in processed
+dengue dataset ends on 2025-12-29. The application
 uses a 14-day freshness policy, so current forecasting is expected to report
 stale/unavailable until recent validated data is supplied. Existing model
 artifacts support the application's historical replay behavior; do not label

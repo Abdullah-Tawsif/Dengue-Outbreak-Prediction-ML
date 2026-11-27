@@ -13,25 +13,22 @@ import numpy as np
 import pandas as pd
 
 from src.feature_engineering import FEATURE_COLUMNS, SUPPORTED_HORIZONS
+from src.model_contract import (
+    ARTIFACT_SCHEMA_VERSION,
+    EVALUATION_METHOD,
+    MAX_CURRENT_DATA_AGE_DAYS,
+    TARGET_DEFINITION,
+    ForecastUnavailableError,
+    ModelUnavailableError,
+    display_case_count,
+)
 from src.risk_engine import classify_risk, describe_drivers
-from src.train import ARTIFACT_SCHEMA_VERSION, EVALUATION_METHOD, TARGET_DEFINITION, display_case_count
 from src.validation import validate_dataset
 
 ROOT = Path(__file__).resolve().parents[1]
 DATA_PATH = ROOT / "data" / "processed" / "dengue_dataset.csv"
 RUNS_DIR = ROOT / "runs"
 MIN_HISTORY_WEEKS = 8
-MAX_CURRENT_DATA_AGE_DAYS = 14
-
-
-class ForecastUnavailableError(RuntimeError):
-    """The application lacks sufficiently fresh, valid forecast data."""
-
-
-class ModelUnavailableError(RuntimeError):
-    """No compatible trained model artifact is available."""
-
-
 @lru_cache(maxsize=1)
 def load_raw_data() -> pd.DataFrame:
     """Read and validate the processed weekly feature table once per process."""

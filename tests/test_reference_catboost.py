@@ -65,6 +65,15 @@ def test_missing_source_columns_fail_clearly():
         engineer_features(pd.DataFrame({'date': []}))
 
 
+def test_default_reference_data_uses_packaged_processed_dataset():
+    ref.load_data.cache_clear()
+    data = ref.load_data()
+
+    assert ref.DATA_PATH.name == "processed_historical_data.csv"
+    assert not data.empty
+    assert data.date.max().date().isoformat() == "2025-12-29"
+
+
 def test_daily_date_resolution_is_on_or_before_and_rejects_outside():
     ward=engineer_features(raw_rows(weeks=20))
     origin,row=ref.resolve_feature_row(ward,'2025-08-14')

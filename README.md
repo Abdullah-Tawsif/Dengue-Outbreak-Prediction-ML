@@ -22,7 +22,7 @@ From the project root:
 python3.12 -m venv .venv
 source .venv/bin/activate
 python -m pip install --upgrade pip
-python -m pip install -r requirements.txt
+python -m pip install -r requirements-dev.txt
 test -f .env || cp .env.example .env
 ```
 
@@ -40,7 +40,7 @@ From the project root:
 py -3.12 -m venv .venv
 .\.venv\Scripts\Activate.ps1
 python -m pip install --upgrade pip
-python -m pip install -r requirements.txt
+python -m pip install -r requirements-dev.txt
 if (-not (Test-Path .env)) { Copy-Item .env.example .env }
 ```
 
@@ -65,7 +65,7 @@ From the project root:
 py -3.12 -m venv .venv
 .venv\Scripts\activate.bat
 python -m pip install --upgrade pip
-python -m pip install -r requirements.txt
+python -m pip install -r requirements-dev.txt
 if not exist .env copy .env.example .env
 ```
 
@@ -87,7 +87,7 @@ The bundled dengue dataset ends on 2025-12-29. With the current freshness policy
 
 ## Reference CatBoost backend
 
-This branch uses the independent reference-style CatBoost backend by default. The three 50-iteration model artifacts and their ordered feature metadata are stored in `runs/reference_catboost_20261126T215839_759578Z/`. The API supports 2-, 3-, and 4-week forecasts. See [REFERENCE_CATBOOST.md](REFERENCE_CATBOOST.md) for the feature contract, chronological evaluation results, historical-date behavior, and known differences from the reference source.
+This branch uses the independent reference-style CatBoost backend by default. The three 50-iteration model artifacts and their ordered feature metadata are stored in `runs/reference_catboost_20261127T095240_866358Z/`. The API supports 2-, 3-, and 4-week forecasts. See [REFERENCE_CATBOOST.md](REFERENCE_CATBOOST.md) for the feature contract, chronological evaluation results, historical-date behavior, and known differences from the reference source.
 
 Set `PREDICTION_BACKEND=phase2` in the local environment to select the preserved Phase2 prediction backend. The app does not silently fall back if the reference CatBoost artifacts are unavailable.
 

@@ -1,3 +1,8 @@
 {
-  "$schema": "https://openapi.vercel.sh/vercel.json"
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "functions": {
+    "main.py": {
+      "excludeFiles": "{tests/**,**/test_*.py,**/__pycache__/**,**/*.pyc,.pytest_cache/**,environment.yml,requirements-dev.txt,.env,.env.*,README.md,ARCHITECTURE.md,MODEL_INTEGRATION.md,REFERENCE_CATBOOST.md,RUNNING.md,VERCEL_DEPLOYMENT.md,data/raw/**,models/**,results/**,src/clean_data.py,src/compare_splits.py,src/preprocessing.py,src/train.py,src/train_reference_catboost.py,runs/aedisight_20261122T063046Z/**,runs/aedisight_20261125T232745_977823Z/**,runs/aedisight_20261126T150553_900940Z/**,runs/aedisight_real_20261122/**,runs/aedisight_200_iter_20261126_215231/{README.txt,results/validation_predictions.csv,results/validation_model_comparison.csv,results/final_test_metrics.csv,results/feature_importance_*.csv,results/reporting_delay_sensitivity.csv,results/risk_metrics.csv,results/stratified_metrics.csv,results/test_predictions_2w.csv,results/test_predictions_3w.csv,results/test_predictions_4w.csv},runs/reference_catboost_20261126T215839_759578Z/**,runs/reference_catboost_20261127T092723_779418Z/**,runs/reference_catboost_20261127T095240_866358Z/{README.txt,catboost_parameters.json,feature_names.json,results/**}}"
+    }
+  }
 }

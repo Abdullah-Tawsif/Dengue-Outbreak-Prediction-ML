@@ -9,7 +9,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import math
 import os
 import platform
 import shutil
@@ -28,6 +27,12 @@ import numpy as np
 import pandas as pd
 import sklearn
 
+from src.model_contract import (
+    ARTIFACT_SCHEMA_VERSION,
+    EVALUATION_METHOD,
+    TARGET_DEFINITION,
+    display_case_count,
+)
 from src.feature_engineering import (
     CATEGORICAL_FEATURES, FEATURE_COLUMNS, SUPPORTED_HORIZONS,
     construct_targets, validate_feature_schema,
@@ -41,11 +46,6 @@ DEFAULT_INPUT = ROOT / "data" / "processed" / "dengue_dataset.csv"
 DEFAULT_OUTPUT_PARENT = ROOT / "runs"
 DEFAULT_CANDIDATES = ("catboost", "gradient_boosting", "hist_gradient_boosting")
 BASELINES = ("persistence", "seasonal_naive")
-TARGET_DEFINITION = "Weekly new dengue cases reported for the ward and target observation week; not cumulative."
-EVALUATION_METHOD = "expanding_window_rolling_origin_v1"
-ARTIFACT_SCHEMA_VERSION = 2
-
-
 @dataclass(frozen=True)
 class SplitConfig:
     """Calendar ranges for rolling validation/test forecast issuance dates."""
@@ -88,18 +88,6 @@ def calculate_metrics(actual: Any, predicted: Any) -> dict[str, float]:
     denominator = float(np.square(y - y.mean()).sum())
     r2 = float("nan") if denominator == 0 else float(1.0 - np.square(error).sum() / denominator)
     return {"mae": float(np.abs(error).mean()), "rmse": float(np.sqrt(np.square(error).mean())), "r2": r2}
-
-
-def display_case_count(prediction: float) -> int:
-    """Clip below zero and round half-up for a whole weekly reported count.
-
-    Continuous non-negative model outputs are retained in evaluation CSVs.
-    This conversion is for the user-facing count and risk band only.
-    """
-    value = float(prediction)
-    if not math.isfinite(value):
-        raise ValueError("Prediction must be finite")
-    return int(math.floor(max(0.0, value) + 0.5))
 
 
 def select_candidate(candidates: list[tuple[float, str, Any, dict[str, float]]]) -> tuple[float, str, Any, dict[str, float]]:

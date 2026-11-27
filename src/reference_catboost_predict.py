@@ -9,12 +9,16 @@ import pandas as pd
 from catboost import CatBoostRegressor
 from src.reference_catboost_features import CATEGORICAL_FEATURES, FEATURE_COLUMNS, engineer_features, usable_feature_mask
 from src.feature_engineering import SUPPORTED_HORIZONS
-from src.predict import (DATA_PATH, ForecastUnavailableError, ModelUnavailableError,
-                         MAX_CURRENT_DATA_AGE_DAYS, data_freshness as _legacy_freshness)
+from src.model_contract import (
+    MAX_CURRENT_DATA_AGE_DAYS,
+    ForecastUnavailableError,
+    ModelUnavailableError,
+    display_case_count,
+)
 from src.risk_engine import classify_risk, describe_drivers
-from src.train import display_case_count
 
 ROOT = Path(__file__).resolve().parents[1]
+DATA_PATH = ROOT / 'data' / 'processed' / 'processed_historical_data.csv'
 RUNS_DIR = ROOT / 'runs'
 
 
