@@ -1,72 +1,92 @@
-# AEDISIGHT — Dengue Outbreak Prediction (EDU AI Engineering Hackathon 2026)
+# Run AEDISIGHT locally
 
-Ward-level dengue early warning for Bangladesh. Uses weekly rainfall, temperature, humidity and case history, with multi-week lags, to forecast cases **2 or 4 weeks ahead** for 60 wards (Chattogram, Dhaka North, Dhaka South, Gazipur, Narayanganj) and classify them **LOW / MEDIUM / HIGH / CRITICAL**, so public-health officers can act before an outbreak peaks.
+These steps use the existing FastAPI application and its checked-in processed dataset and trained model artifacts. Use Python 3.12. The commands work in a VS Code integrated terminal or a regular terminal.
 
-- **Model:** CatBoost regressor per horizon (2w, 4w), trained on 2016–2024, tested on 2025
-- **Backend:** FastAPI (session auth + CSRF) · **Frontend:** Jinja2 dashboard with chart and driver breakdown
-- Design details: see [ARCHITECTURE.md](ARCHITECTURE.md)
+## Open the project in VS Code
 
-## Quick start (≈ 3 minutes)
+Open the project folder, then choose **Terminal → New Terminal**. In the terminal, confirm its current directory is the project root. After creating the virtual environment below, open the Command Palette (`Ctrl+Shift+P`), select **Python: Select Interpreter**, and choose the interpreter inside `.venv`.
+
+Keep any existing `.env` file and database. If `.env` does not exist, copy `.env.example` using the platform-specific command below. Set `APP_ENV=development`, `DATABASE_URL=sqlite:///./dengue.db`, and `COOKIE_SECURE=false` for local development. Replace the example `SESSION_SECRET` with a fresh random value of at least 32 characters. Generate one with:
+
+```sh
+python -c "import secrets; print(secrets.token_urlsafe(48))"
+```
+
+Edit `.env` locally to set the generated value. Never commit `.env` or use the example secret.
+
+## Linux terminal or VS Code terminal (Bash)
+
+From the project root:
+
 ```bash
-git clone https://github.com/Abdullah-Tawsif/Dengue-Outbreak-Prediction-ML.git
-cd Dengue-Outbreak-Prediction-ML
-
-python -m venv .venv
-source .venv/bin/activate            # Windows: .venv\Scripts\activate
-pip install -r requirements.txt
-
-cp .env.example .env                 # Windows: copy .env.example .env
-# edit .env: set SESSION_SECRET to 32+ random characters, e.g.
-# python -c "import secrets; print(secrets.token_urlsafe(48))"
-
-python train.py                      # skip if models/*.joblib are already in the repo
-uvicorn main:app --reload
-```
-Open http://127.0.0.1:8000 → **Register** a hospital account → sign in → `/user_dashboard`.
-
-## Using the dashboard
-1. Pick a **city**, **ward**, **forecast period** (2 or 4 weeks) and a **forecast origin week**.
-2. Click **Generate forecast** to see predicted weekly cases, the risk tier, weather/case drivers, and a history-vs-forecast chart.
-
-> **Tip:** dengue is seasonal (peak Jul–Sep, almost no cases Nov–Mar). Use an origin week in **May–Sep** (default `2025-08-04`) to see peak-season risk. The latest data point (2025-12-29) is dry season, so a near-zero forecast there is correct. When the target week exists in the dataset, the actual recorded cases are shown for comparison.
-
-## Project structure
-```
-main.py                      FastAPI app and POST /api/predict
-train.py                     trains 2w/3w/4w CatBoost models, writes models/metrics.json
-src/feature_engineering.py   per-ward lag and rolling features (shared by train + serve)
-src/predict.py               cached data/models, forecast from a chosen origin week
-src/risk_engine.py           risk tiers and driver descriptions
-src/backend/                 auth, database, models, security
-templates/  static/          dashboard UI
-data/processed/              dengue_dataset.csv
-models/                      trained .joblib bundles + metrics.json
-ARCHITECTURE.md              data flow, validation split, model rationale, cost controls
+python3.12 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
+test -f .env || cp .env.example .env
 ```
 
-## Data
-`data/processed/dengue_dataset.csv`: weekly records per ward (2016-02-01 → 2025-12-29) with `avg_temp_C`, `rainfall_mm`, `relative_humidity_pct`, `dengue_cases`, plus ward vulnerability features (`population_density_sqkm`, `water_logging_risk_index`, `sanitation_score`), supplied by the hackathon organizers.
+Set the local values and a fresh session secret in `.env`, then start the server:
 
-## Model evaluation
-`python train.py` prints and saves MAE/RMSE on the held-out 2025 test set to `models/metrics.json`, alongside simple baselines.
+```bash
+python -m uvicorn main:app --host 127.0.0.1 --port 8000 --reload
+```
 
-## Limitations
-- Forecasts use the historical dataset (no live weather/hospital feed yet).
-- Risk tiers are prototype ward-relative percentiles, not clinically validated thresholds.
-- Driver text describes observed inputs, not SHAP attributions.
+## Windows PowerShell or VS Code PowerShell terminal
 
-## AI assistants & external APIs disclosure
-All team members used the **free tiers** of these assistants (no paid subscriptions and no paid APIs):
+From the project root:
 
-| AI assistant | Used for |
-|---|---|
-| **ChatGPT** (OpenAI, free) | Coding help: backend, ML pipeline, debugging |
-| **Claude** (Anthropic, free) | Coding help: code review, debugging (zero-forecast / risk-band fix), documentation |
-| **Gemini** (Google, free) | HTML, CSS and styling of the website |
+```powershell
+py -3.12 -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
+if (-not (Test-Path .env)) { Copy-Item .env.example .env }
+```
 
-- All AI-generated code was reviewed, integrated and tested by the team.
-- **External APIs at runtime: none.** No weather API and no LLM calls; inference runs locally with CatBoost, so running the app costs nothing.
-- Libraries: FastAPI, CatBoost, pandas, NumPy, scikit-learn, joblib, SQLAlchemy.
+Set the local values and a fresh session secret in `.env`, then start the server:
 
+```powershell
+python -m uvicorn main:app --host 127.0.0.1 --port 8000 --reload
+```
 
-Built in 24 hours for the EDU AI Engineering Hackathon 2026, preliminary round (Nov 21–22, 2026).
+If PowerShell blocks virtual-environment activation, allow it for this terminal only and activate again:
+
+```powershell
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+.\.venv\Scripts\Activate.ps1
+```
+
+## Windows Command Prompt (cmd.exe)
+
+From the project root:
+
+```bat
+py -3.12 -m venv .venv
+.venv\Scripts\activate.bat
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
+if not exist .env copy .env.example .env
+```
+
+Set the local values and a fresh session secret in `.env`, then start the server:
+
+```bat
+python -m uvicorn main:app --host 127.0.0.1 --port 8000 --reload
+```
+
+## Open and stop the application
+
+Visit <http://127.0.0.1:8000>. Leave the terminal running while you use the app. Press `Ctrl+C` in that terminal to stop it. If port 8000 is already in use, change the command to `--port 8001` and visit <http://127.0.0.1:8001>.
+
+The project includes a local SQLite database file where supplied and will not reset it during these steps. For a fresh checkout, the SQLite database is created as needed. The processed dataset and trained horizon artifacts are included, so model training is not required to start the server.
+
+## Forecast data status
+
+The bundled dengue dataset ends on 2025-12-29. With the current freshness policy, live/current forecasting is disabled until recent weekly data is supplied. The dashboard can still demonstrate held-out historical replay; label it as historical replay, not live surveillance.
+
+## Reference CatBoost backend
+
+This branch uses the independent reference-style CatBoost backend by default. The three 50-iteration model artifacts and their ordered feature metadata are stored in `runs/reference_catboost_20261126T215839_759578Z/`. The API supports 2-, 3-, and 4-week forecasts. See [REFERENCE_CATBOOST.md](REFERENCE_CATBOOST.md) for the feature contract, chronological evaluation results, historical-date behavior, and known differences from the reference source.
+
+Set `PREDICTION_BACKEND=phase2` in the local environment to select the preserved Phase2 prediction backend. The app does not silently fall back if the reference CatBoost artifacts are unavailable.
