@@ -19,6 +19,7 @@ const totalSprayingCrews = document.getElementById("totalSprayingCrews");
 const areas = JSON.parse(document.body.dataset.areas || "{}");
 let scenarioControlsInitialized = false;
 let operationsRequestTimer;
+let lastSuccessfulForecast = null;
 
 function moneylessNumber(value, digits = 2) {
     return new Intl.NumberFormat(undefined, { maximumFractionDigits: digits }).format(value);
@@ -33,9 +34,56 @@ function setMessage(text, error = false) {
     formMessage.className = `form-message${error ? " error" : ""}`;
 }
 
+function fallbackDispatchDrafts(selectedCity, forecast) {
+    const wardName = forecast?.ward || ward.value || "selected ward";
+    const predictedCases = Number(forecast?.predictedCases);
+    const caseCount = Number.isFinite(predictedCases)
+        ? moneylessNumber(predictedCases, 0)
+        : "unknown";
+    const targetDate = forecast?.targetDate ? ` for ${forecast.targetDate}` : "";
+    const risk = forecast?.riskCategory ? ` (${forecast.riskCategory})` : "";
+    const forecastSummary = `${wardName}${risk}: ${caseCount} projected cases${targetDate}`;
+
+    return {
+        sms: `AEDISIGHT planning alert — ${selectedCity || "selected area"}. ${forecastSummary}. Verify forecasts and local capacity before action. Recommendations only; not a confirmed dispatch order.`,
+        whatsapp: `AEDISIGHT operational planning brief — ${selectedCity || "selected area"}\n${forecastSummary}.\nPlease verify forecasts, stock, and ward capacity with local teams. This is decision support, not a confirmed dispatch or admission order.`,
+    };
+}
+
+function updateDispatchActions(selectedCity, forecast, drafts, useScenarioControls = false) {
+    const dispatchActions = document.getElementById("dispatchActions");
+    const fallbackDrafts = fallbackDispatchDrafts(selectedCity, forecast);
+    const sms = typeof drafts?.sms === "string" && drafts.sms.trim()
+        ? drafts.sms
+        : fallbackDrafts.sms;
+    const whatsapp = typeof drafts?.whatsapp === "string" && drafts.whatsapp.trim()
+        ? drafts.whatsapp
+        : fallbackDrafts.whatsapp;
+    const params = new URLSearchParams({ city: selectedCity || "" });
+    if (useScenarioControls) {
+        params.set("availableStockPercent", stockPercent.value);
+        params.set("totalSprayingCrews", totalSprayingCrews.value || "0");
+    }
+
+    document.getElementById("smsDraftLink").href =
+        `sms:?body=${encodeURIComponent(sms)}`;
+    document.getElementById("whatsappDraftLink").href =
+        `https://wa.me/?text=${encodeURIComponent(whatsapp)}`;
+    document.getElementById("commissionerBriefLink").href =
+        `/exports/commissioner-brief?${params.toString()}`;
+    dispatchActions.hidden = false;
+}
+
+function showOperationsError(summary, error) {
+    const message = document.createElement("p");
+    message.className = "operations-error";
+    message.textContent = `Operational summary unavailable: ${error?.message || "Please try again."}`;
+    summary.replaceChildren(message);
+}
+
 async function loadOperations(selectedCity, useScenarioControls = false) {
     const summary = document.getElementById("operationsSummary");
-    const dispatchActions = document.getElementById("dispatchActions");
+    updateDispatchActions(selectedCity, lastSuccessfulForecast, null, useScenarioControls);
     try {
         const params = new URLSearchParams({ city: selectedCity });
         if (useScenarioControls) {
@@ -48,18 +96,10 @@ async function loadOperations(selectedCity, useScenarioControls = false) {
         });
         const data = await response.json();
         if (!response.ok) throw new Error(data.detail || "Operational status unavailable.");
-        const draftQuery = new URLSearchParams({ city: selectedCity });
-        if (useScenarioControls) {
-            draftQuery.set("availableStockPercent", stockPercent.value);
-            draftQuery.set("totalSprayingCrews", totalSprayingCrews.value || "0");
-        }
-        document.getElementById("smsDraftLink").href =
-            `sms:?body=${encodeURIComponent(data.dispatchDrafts.sms)}`;
-        const whatsappLink = document.getElementById("whatsappDraftLink");
-        whatsappLink.href = `https://wa.me/?text=${encodeURIComponent(data.dispatchDrafts.whatsapp)}`;
-        document.getElementById("commissionerBriefLink").href =
-            `/exports/commissioner-brief?${draftQuery.toString()}`;
-        dispatchActions.hidden = false;
+        const drafts = data.status === "no-live-predictions"
+            ? null
+            : data.dispatchDrafts;
+        updateDispatchActions(selectedCity, lastSuccessfulForecast, drafts, useScenarioControls);
         if (!scenarioControlsInitialized) {
             stockPercent.value = String(data.scarcityControls.availableStockPercent);
             totalSprayingCrews.value = String(data.scarcityControls.totalSprayingCrews);
@@ -185,8 +225,7 @@ async function loadOperations(selectedCity, useScenarioControls = false) {
         }
         addLine("Demand ratios are planning assumptions, not validated clinical coefficients. Routing and crew assignments are recommendations, not dispatch orders.");
     } catch (error) {
-        dispatchActions.hidden = true;
-        summary.textContent = error.message;
+        showOperationsError(summary, error);
     }
 }
 
@@ -297,6 +336,8 @@ form.addEventListener("submit", async (event) => {
 
         document.getElementById("featureCount").textContent = data.modelInputFeatureCount;
         document.getElementById("artifactInfo").textContent = `Run: ${data.experimentId} · training data through ${formatDate(data.modelTrainingDataThrough)}.`;
+        lastSuccessfulForecast = { ...data, ward: data.ward || ward.value };
+        updateDispatchActions(city.value, lastSuccessfulForecast, null, scenarioControlsInitialized);
         result.hidden = false;
         result.scrollIntoView({ behavior: "smooth", block: "start" });
         await loadOperations(city.value, scenarioControlsInitialized);

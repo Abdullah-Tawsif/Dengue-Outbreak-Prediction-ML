@@ -135,6 +135,19 @@ def test_live_retry_updates_observation_and_prediction_without_case_input(live_c
     assert defaults.json()["latestCaseDate"] == "2025-07-07"
 
 
+def test_live_input_page_uses_v4_assets_and_includes_notification_actions(live_client):
+    client, _ = live_client
+
+    response = client.get("/live-input")
+
+    assert response.status_code == 200
+    assert "/static/css/user/live_input.css?v=4" in response.text
+    assert "/static/js/user/live_input.js?v=4" in response.text
+    assert 'id="smsDraftLink"' in response.text
+    assert 'id="whatsappDraftLink"' in response.text
+    assert 'id="commissionerBriefLink"' in response.text
+
+
 def test_existing_live_observations_get_reported_case_provenance(monkeypatch):
     engine = create_engine(
         "sqlite+pysqlite:///:memory:",
