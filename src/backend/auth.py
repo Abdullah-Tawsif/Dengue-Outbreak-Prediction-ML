@@ -15,6 +15,7 @@ from sqlalchemy.orm import Session
 
 from src.backend.database import get_db
 from src.backend.models import User
+from src.backend.audit import record_audit_event
 
 from src.backend.security import (
     hash_password,
@@ -271,6 +272,10 @@ def register_user(
             error="Registration could not be completed. Please try again.",
         )
 
+    record_audit_event(
+        db, "user_registered", "A hospital account was registered.", new_user.id
+    )
+
     # 9. Reset session state and rotate CSRF token.
     request.session.clear()
     rotate_csrf_token(request)
@@ -295,9 +300,13 @@ def login_user(
 
     # 1. Verify CSRF token.
     if not verify_csrf_token(request, csrf_token):
-        raise HTTPException(
-            status_code=403,
-            detail="Invalid security token. Reload the page and try again.",
+        # Browser form submissions can outlive their signed session cookie
+        # (for example, when a stale tab or cached login page is submitted).
+        # Reject the request, then return the browser to a page with a fresh
+        # token instead of displaying a raw JSON error document.
+        return redirect_with_message(
+            "/login",
+            error="Your login page expired. Please try again.",
         )
 
     # 2. Normalize email.
@@ -344,6 +353,13 @@ def login_user(
     # 8. Generate a fresh CSRF token.
     rotate_csrf_token(request)
 
+    record_audit_event(
+        db,
+        "user_login",
+        "Administrator signed in." if user.is_admin else "Hospital user signed in.",
+        user.id,
+    )
+
     # 9. Determine dashboard using the database value.
     if user.is_admin:
         return RedirectResponse(
@@ -360,6 +376,7 @@ def login_user(
 def logout_user(
     request: Request,
     csrf_token: str = Form(...),
+    db: Session = Depends(get_db),
 ):
     """Log out the authenticated user."""
 
@@ -370,6 +387,17 @@ def logout_user(
             detail="Invalid security token.",
         )
 
+    # Record the authenticated account before clearing its session.
+    user_id = request.session.get("user_id")
+    user = db.get(User, user_id) if type(user_id) is int else None
+    if user is not None:
+        record_audit_event(
+            db,
+            "user_logout",
+            "Administrator signed out." if user.is_admin else "Hospital user signed out.",
+            user.id,
+        )
+
     # Remove all session data.
     request.session.clear()
 
@@ -378,4 +406,3 @@ def logout_user(
         url="/login",
         status_code=status.HTTP_303_SEE_OTHER,
     )
-

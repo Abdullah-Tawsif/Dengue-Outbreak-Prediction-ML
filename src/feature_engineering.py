@@ -1,82 +1,66 @@
-"""Feature generation shared by CatBoost training and inference.
+"""Canonical feature and forecast-target schema for the dengue pipeline.
 
-IMPORTANT: This implementation mirrors the feature definitions and names in
- the CatBoost training script supplied by the project team. Do not change a
-feature here without retraining the models.
+The cleaner creates all lagged and rolling columns. This module declares and
+checks that contract; it deliberately does not recalculate cleaner features.
 """
+
 from __future__ import annotations
+
+from collections.abc import Iterable
 
 import numpy as np
 import pandas as pd
 
-RAW_COLUMNS = [
-    "date", "city", "ward_id", "population_density_sqkm",
-    "water_logging_risk_index", "sanitation_score", "avg_temp_C",
-    "max_temp_c", "min_temp_c", "rainfall_mm",
+TARGET_COLUMN = "dengue_cases"
+CATEGORICAL_FEATURES = ("city", "ward_id")
+NUMERIC_FEATURES = (
+    "population_density_sqkm", "water_logging_risk_index", "sanitation_score",
+    "avg_temp_C", "max_temp_c", "min_temp_c", "rainfall_mm",
     "relative_humidity_pct", "dengue_cases",
-]
-CATEGORICAL_FEATURES = ["city", "ward_id"]
-DROP_COLUMNS = [
-    "date", "dengue_cases", "target_2w", "target_3w", "target_4w",
-    "target_date_2w", "target_date_3w", "target_date_4w",
-]
+    *(f"rain_lag_{week}w" for week in range(1, 5)),
+    "rain_sum_2w", "rain_sum_4w",
+    *(f"dengue_cases_lag_{week}w" for week in range(1, 5)),
+    *(f"avg_temp_C_lag_{week}w" for week in range(1, 5)),
+    *(f"relative_humidity_pct_lag_{week}w" for week in range(1, 5)),
+    "avg_temp_C_mean_prev_4w", "relative_humidity_pct_mean_prev_4w",
+    "calendar_week", "calendar_month",
+)
+FEATURE_COLUMNS = (*CATEGORICAL_FEATURES, *NUMERIC_FEATURES)
+SUPPORTED_HORIZONS = (2, 3, 4)
+TARGET_CONSTRUCTION_MAX_WEEKS = 52
 
 
-def build_features(raw: pd.DataFrame) -> pd.DataFrame:
-    """Return raw rows plus the exact engineered columns used by CatBoost."""
-    missing = [column for column in RAW_COLUMNS if column not in raw.columns]
+def validate_feature_schema(frame: pd.DataFrame) -> None:
+    """Raise a useful error when cleaner output lacks or corrupts model fields."""
+    missing = [column for column in FEATURE_COLUMNS if column not in frame.columns]
     if missing:
-        raise ValueError(f"Dataset is missing required raw columns: {missing}")
-
-    df = raw[RAW_COLUMNS].copy()
-    df["date"] = pd.to_datetime(df["date"], errors="raise")
-    df = df.sort_values(["ward_id", "date"]).reset_index(drop=True)
-    grouped = df.groupby("ward_id", sort=False, group_keys=False)
-
-    for lag in range(1, 5):
-        df[f"rainfall_lag_{lag}w"] = grouped["rainfall_mm"].shift(lag)
-        df[f"avg_temp_lag_{lag}w"] = grouped["avg_temp_C"].shift(lag)
-        df[f"humidity_lag_{lag}w"] = grouped["relative_humidity_pct"].shift(lag)
-        df[f"dengue_cases_lag_{lag}w"] = grouped["dengue_cases"].shift(lag)
-
-    for window in [2, 4, 8]:
-        df[f"rainfall_mean_prev_{window}w"] = grouped["rainfall_mm"].transform(
-            lambda x, w=window: x.shift(1).rolling(w).mean()
-        )
-        df[f"rainfall_sum_prev_{window}w"] = grouped["rainfall_mm"].transform(
-            lambda x, w=window: x.shift(1).rolling(w).sum()
-        )
-
-    for window in [2, 4, 8]:
-        df[f"avg_temp_mean_prev_{window}w"] = grouped["avg_temp_C"].transform(
-            lambda x, w=window: x.shift(1).rolling(w).mean()
-        )
-
-    for window in [2, 4, 8]:
-        df[f"humidity_mean_prev_{window}w"] = grouped["relative_humidity_pct"].transform(
-            lambda x, w=window: x.shift(1).rolling(w).mean()
-        )
-
-    for window in [2, 4, 8]:
-        df[f"dengue_mean_prev_{window}w"] = grouped["dengue_cases"].transform(
-            lambda x, w=window: x.shift(1).rolling(w).mean()
-        )
-
-    df["dengue_change_1w"] = df["dengue_cases"] - df["dengue_cases_lag_1w"]
-    df["dengue_change_2w"] = df["dengue_cases_lag_1w"] - df["dengue_cases_lag_2w"]
-    df["dengue_change_4w"] = df["dengue_cases_lag_1w"] - df["dengue_cases_lag_4w"]
-    df["dengue_growth_ratio_1w"] = df["dengue_cases"] / (df["dengue_cases_lag_1w"] + 1)
-    df["dengue_growth_ratio_2w"] = df["dengue_cases"] / (df["dengue_cases_lag_2w"] + 1)
-
-    df["calendar_week"] = df["date"].dt.isocalendar().week.astype(int)
-    df["calendar_month"] = df["date"].dt.month
-    df["week_sin"] = np.sin(2 * np.pi * df["calendar_week"] / 52)
-    df["week_cos"] = np.cos(2 * np.pi * df["calendar_week"] / 52)
-    df["month_sin"] = np.sin(2 * np.pi * df["calendar_month"] / 12)
-    df["month_cos"] = np.cos(2 * np.pi * df["calendar_month"] / 12)
-    return df
+        raise ValueError(f"Processed data is missing required feature columns: {missing}")
+    for column in CATEGORICAL_FEATURES:
+        if frame[column].isna().any() or frame[column].astype(str).str.strip().eq("").any():
+            raise ValueError(f"Categorical feature {column!r} contains missing/blank values")
+    for column in NUMERIC_FEATURES:
+        converted = pd.to_numeric(frame[column], errors="coerce")
+        if converted.isna().any() or not np.isfinite(converted.to_numpy(dtype=float)).all():
+            raise ValueError(f"Numeric feature {column!r} contains missing or non-finite values")
 
 
-def model_feature_columns(feature_frame: pd.DataFrame) -> list[str]:
-    """Feature ordering generated by the supplied training script."""
-    return [column for column in feature_frame.columns if column not in DROP_COLUMNS]
+def construct_targets(frame: pd.DataFrame, horizons: Iterable[int] = SUPPORTED_HORIZONS) -> pd.DataFrame:
+    """Add same-ward future dengue values and dates after chronological sorting.
+
+    Input is expected to have passed weekly-continuity validation. That makes a
+    grouped shift of *h* observations exactly an h-week forecast.
+    """
+    result = frame.copy()
+    if "date" not in result or "ward_id" not in result or TARGET_COLUMN not in result:
+        raise ValueError("Target construction requires date, ward_id, and dengue_cases")
+    result["date"] = pd.to_datetime(result["date"], errors="raise")
+    result = result.sort_values(["ward_id", "date"], kind="stable").reset_index(drop=True)
+    grouped = result.groupby("ward_id", sort=False, observed=True)
+    for horizon in horizons:
+        if not isinstance(horizon, (int, np.integer)) or not 1 <= horizon <= TARGET_CONSTRUCTION_MAX_WEEKS:
+            raise ValueError(
+                f"Target-construction horizon must be 1–{TARGET_CONSTRUCTION_MAX_WEEKS} weeks"
+            )
+        result[f"target_{horizon}w"] = grouped[TARGET_COLUMN].shift(-horizon)
+        result[f"target_date_{horizon}w"] = grouped["date"].shift(-horizon)
+    return result
